@@ -79,15 +79,25 @@ https://cloud.tencent.com/developer/article/1979728
 class MyClass {
 static std::string name = ""; // 编译错误
 };
-* 在多个CPP文件中包含头文件定义类结构之外的变量也会导致错误：
 
-// hpp
+* 按照一次定义原则，一个变量或者实体只能出现一个编译单元内，除非这个变量或者实体使用了inline进行修饰。如下面的代码。如果在一个类中定义了一个静态成员变量，然后在类的外部进行初始化，本身符合一次定义原则。但是如果在多个CPP文件同时包含了该头文件，在链接时编译器会报错。
+```cpp
+//.hpp
 class MyClass {
-static std::string name; // 可以
+static std::string msg;
+...
 };
-// cpp
-MyClass::name = ""; // 链接错误
-为了解决这些问题，C++17引入了inline变量
+// 如 果 被 多 个CPP文 件 包 含 会 导 致 链 接ERROR
+std::string MyClass::msg{"OK"};
+```
+* C++17中内联变量的使用可以帮助我们解决实际编程中的问题而又不失优雅。使用inline后，即使定义的全局对象被多个文件引用也只会有一个全局对象。如下面的代码，就不会出现之前的链接问题。
+```cpp
+class MyClass {
+inline static std::string msg{"OK"};
+...
+};
+inline MyClass myGlobalObj;
+```
 
 # 5. extern
 ---
@@ -326,4 +336,193 @@ int main() {
 }
 ```
 
+# 19. unique_ptr::get()
+---
+获取裸指针
+# 20. 智能指针使用make_unique<>创建智能指针比用new更安全，因为它可以确保资源在异常发生时也能被正确释放。
 
+# 21.executeQuery占位符 
+auto rslt1 = conn.executeQuery(
+        "select count(*) from e_chns_config where dev_id = ? and type_id = "
+        "1",
+        devicemap.first);
+第二个参数是替换占位符?的值。
+
+# 22. 链式处理函数返回值
+---
+* 通过`and_then()`方法，可以链式调用多个函数，并在每个函数的返回值上执行后续操作。如果任何一个中间步骤返回了一个错误（expected的错误分支），整个链式处理就会停止
+```cpp
+static tl::expected<int, string> init(int argc,
+                                      std::shared_ptr<const char *[]> argv) {
+  if (argc == 4) {
+    return Config::make(string(argv[0])).and_then([&](Config conf) {
+      config = conf;
+      cout << "config file: " << argv[0] << endl;
+      for (int k = 0; k < config.devicesMap.size(); k++) {
+        hzi::sysDevMask += (int)exp2(k);
+      }
+      if (string(argv[1]) == "--verbose")
+        config.verbose = true;
+      if (string(argv[2]) == "--disableMslocating")
+        config.disableMslocating = true;
+      if (string(argv[3]) == "--disableAppResis")
+        config.disableAppResis = true;
+      return initChanelsConfig().and_then(
+          [&](auto r) { return initChnLabels(); });
+      // .and_then([&](auto r) {
+      //     if (config.ms_locating && config.ms_experimental)
+      //         std::thread(setupMSRegression).detach();
+      //     return tl::expected<int, string>(0);
+      // });
+      // .and_then([&](auto r) { return readChnLocations(); });
+    });
+  }
+  return 0;
+}
+```
+* 通过`.map()`和`.map_error()`方法，可以对函数的返回值进行转换或处理错误。
+     `.map()`：对函数的返回值进行转换，如果函数返回的是`expected<T, E>`类型（即返回值为成功），则可以使用`.map()`获取返回值并执行后续逻辑。
+     `.map_error()`：对函数的错误返回值进行转换，如果函数返回的是`expected<T, E>`类型(即返回值为失败)，则可以使用`.map_error()`获取返回值并执行后续逻辑。
+
+# 23. #pragma region和#pragma endregion
+代码折叠
+
+# 24. 时间
+---
+`std::chrono::system_clock::time_point` 是 C++ 标准库中 `<chrono>` 头文件定义的一个时间点类型，用于表示系统时钟的时间点。`std::chrono` 是 C++11 引入的用于处理时间的库，它提供了丰富的功能来处理时间点、时间间隔和时间单位。
+
+### 1. **`std::chrono::system_clock`**
+`std::chrono::system_clock` 是一个系统时钟，它表示从某个固定时间点（通常是 1970 年 1 月 1 日 00:00:00 UTC，即 Unix 时间戳的起点）到当前时间的持续时间。它通常用于获取当前时间点或计算时间间隔。
+
+### 2. **`std::chrono::system_clock::time_point`**
+`std::chrono::system_clock::time_point` 是 `system_clock` 的时间点类型，表示从系统时钟的起始点（epoch）开始的时间点。它是一个强类型的时间点，可以进行时间运算和比较。
+
+### 3. **使用示例**
+以下是一些常见的使用方式：
+
+#### 获取当前时间点
+```cpp
+#include <iostream>
+#include <chrono>
+#include <ctime> // 用于将时间点转换为可读格式
+
+int main() {
+    // 获取当前时间点
+    std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
+
+    // 将时间点转换为时间戳（自 1970 年以来的秒数）
+    std::time_t now_c = std::chrono::system_clock::to_time_t(now);
+
+    // 转换为可读格式
+    std::cout << "Current time: " << std::ctime(&now_c);
+
+    return 0;
+}
+```
+
+#### 计算时间间隔
+```cpp
+#include <iostream>
+#include <chrono>
+#include <thread> // 用于模拟延时
+
+int main() {
+    // 获取开始时间点
+    auto start = std::chrono::system_clock::now();
+
+    // 模拟延时
+    std::this_thread::sleep_for(std::chrono::seconds(2));
+
+    // 获取结束时间点
+    auto end = std::chrono::system_clock::now();
+
+    // 计算时间间隔
+    auto duration = std::chrono::duration_cast<std::chrono::seconds>(end - start);
+
+    std::cout << "Elapsed time: " << duration.count() << " seconds" << std::endl;
+
+    return 0;
+}
+```
+
+#### 时间点的比较
+```cpp
+#include <iostream>
+#include <chrono>
+
+int main() {
+    auto now = std::chrono::system_clock::now();
+    auto future = now + std::chrono::seconds(10);
+
+    if (future > now) {
+        std::cout << "Future time is later than now." << std::endl;
+    }
+
+    return 0;
+}
+```
+
+### 4. **时间点的转换**
+`std::chrono::system_clock` 提供了从时间点到时间戳（`std::time_t`）的转换，也可以通过 `std::ctime` 或 `std::put_time` 将时间点格式化为可读的字符串。
+
+#### 格式化时间点
+```cpp
+#include <iostream>
+#include <chrono>
+#include <iomanip> // 用于 std::put_time
+#include <sstream>
+#include <locale> // 用于设置本地化
+
+int main() {
+    auto now = std::chrono::system_clock::now();
+    std::time_t now_c = std::chrono::system_clock::to_time_t(now);
+
+    std::stringstream ss;
+    ss << std::put_time(std::localtime(&now_c), "%Y-%m-%d %H:%M:%S");
+
+    std::cout << "Formatted time: " << ss.str() << std::endl;
+
+    return 0;
+}
+```
+
+### 5. **总结**
+`std::chrono::system_clock::time_point` 是一个非常强大的工具，用于表示和处理系统时间点。它支持时间运算、时间间隔计算和时间点的格式化，广泛应用于需要精确时间处理的场景，例如日志记录、性能测量和时间同步等。
+
+# 25. filesystem::path替代string作为文件路径
+---
+使用 filesystem::path 替代 std::string 作为文件路径在C++编程中具有诸多优势，包括平台无关性、更丰富的功能、更好的类型安全、性能优化以及与 <filesystem> 库中其他功能的紧密集成。这些优势使得 filesystem::path 成为处理文件路径的推荐选择
+filesystem::path 提供了许多用于操作路径的函数，如提取父目录、文件名、扩展名，拼接路径，判断是否为绝对路径等。
+```cpp
+namespace fs = std::filesystem;
+fs::path filePath = "example/path.txt";
+string filename=filePath.filename().string();//获取文件名
+```
+
+# 26. 读取二进制数据
+---
+```cpp
+if (!fs::exists(fileName) || !fs::is_regular_file(fileName)) {  
+        //is_regular_file()检查是否为普通文件，而非目录等。如果路径不存在或不是一个常规文件，则返回false。
+        return tl::make_unexpected("No such file or file type error: " +
+                                   fileName.string());
+      }
+
+      std::ifstream ifs(fileName, std::ifstream::binary);//二进制模式打开文件(默认以文本模式打开)，以便读取原始数据。
+
+      if (!ifs) {
+        return tl::make_unexpected("Unable to open file: " + fileName.string());
+      }
+
+      DataFrame df;
+      df.upHead = std::make_unique<char[]>(32);
+      df.pHead_ = df.upHead.get();
+      ifs.read((char *)df.pHead_, 32);  //读取32字节到df.pHead_指向的内存中。
+
+```
+
+# 27. 字节序转换
+be16toh/be32toh/be64toh
+hbe16/hbe32/hbe64把主机字节序转换为大端
+* 这几个函数比较hton/ntoh更新，也更通用。hton/ntoh主要用于网络编程。
+  
