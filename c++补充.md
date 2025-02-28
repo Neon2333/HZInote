@@ -1,4 +1,35 @@
+
+
+# 1. 命名空间
+
+---
+
+> 命名空间可以帮助组织代码，使其更清晰、更有条理。这使得代码更容易阅读和维护。
+>
+> - **按功能划分**：可以将不同的功能模块放在不同的命名空间中。例如，把数学相关的函数放在 `math` 命名空间，把文件操作相关的函数放在 `filesystem` 命名空间。
+> - 比用类的静态成员封装更加**轻量**：命名空间比类更轻量级。它不需要像类那样有构造函数、成员函数和成员变量的概念，也不会涉及对象的实例化。
+
+* 全局命名空间
+
+  C++ 中的程序通常包含多个模块，每个模块可能包含大量的变量、类和函数。如果这些变量和函数都直接放在全局命名空间中，很容易发生命名冲突。
+
+  所有没有被显式放入其他命名空间的代码（如变量、函数和类）都属于全局命名空间。
+
+  而用户定义的命名空间（如 `namespace AA`）可以用来将代码进一步组织和隔离。
+
+* 匿名命名空间
+
+  一种特殊的命名空间，它没有名称，因此只能在当前文件（包括同一翻译单元）中访问。
+
+  作用：
+
+  替代C风格的`static`，限制（变量、函数等）只能在当前文件中访问，不能被其他文件访问。
+
+  
+
 # 1. std::expected
+
+---
 
 > std::expected 是 C++23 中引入的一个新特性，但它已经在许多现代C++库（如 Boost.Outcome）中被广泛讨论和使用。
 std::expected 是一个模板类，用于表示函数的返回值，它可以包含一个成功值（T）或者一个错误值（E）。它的设计目标是提供一种更安全、更灵活的方式来处理错误情况，相比传统的返回值和异常机制，它有以下特点：
@@ -52,7 +83,39 @@ int main() {
 
     return 0;
 }
+```
 
+* 返回E对象
+```cpp
+ template <class E>
+unexpected<typename std::decay<E>::type> make_unexpected(E &&e) {
+  return unexpected<typename std::decay<E>::type>(std::forward<E>(e));
+}
+
+//使用
+   catch (fs::filesystem_error &e) {
+    cout << e.what();
+    return tl::make_unexpected(string("DataFrame::remove error for class_id ") +
+                               std::to_string(classId()) + ":" + e.what());
+  } catch (sql_exception &e) {
+    cout << e.what();
+    return tl::make_unexpected(string("DataFrame::remove error for class_id ") +
+                               std::to_string(classId()) + ":" + e.what());
+  } catch (std::exception &e) {
+    cout << e.what();
+    return tl::make_unexpected(string("DataFrame::remove error for class_id ") +
+                               std::to_string(classId()) + ":" + e.what());
+  }
+```
+
+* 根据返回不同执行不同操作
+  map执行成功时操作，lambda捕获返回值T
+  ma'p执行错误时操作，lambda捕获返回值E
+  ````cpp
+    divide(10,2).map([](int val)){cout<<val<<endl;}
+                .map_error([](const std::string &err){cout<<err<<endl;});
+  
+    ```
 # 2. insert_or_assign
 ---
 insert_or_assign()是C++17中引入的一个成员函数模板，用于在std::map、std::unordered_map
@@ -202,22 +265,38 @@ size()：返回优先队列中的元素数量。
     map.count(key) > 0
     map.contains(key) // C++20
 
-# 13. std::vector访问首元素
----
-`.at(0)`，返回引用，进行越界判断
-`[0]`
-`.front()`，返回首元素引用。当vector为空时未定义行为，用之前判断`size()>0`或`!empty()`
-`begin()`，迭代器需要解引用
+# 13. std::vector
 
+* 访问首元素
 
-# 14. std::vector删除元素
----
-erase删除某元素后，原本指向该元素及其后续元素的迭代器、指针和引用都会失效。
-在调用erase之后，如果要继续使用容器中的元素，应该重新获取迭代器,iter=erase()。
+  `.at(0)`，返回引用，进行越界判断
+  `[0]`
+  `.front()`，返回首元素引用。当vector为空时未定义行为，用之前判断`size()>0`或`!empty()`
+  `begin()`，迭代器需要解引用
 
-# 15. 查找
+* std::vector删除元素
+
+  erase删除某元素后，原本指向该元素及其后续元素的迭代器、指针和引用都会失效。
+  在调用erase之后，如果要继续使用容器中的元素，应该重新获取迭代器,iter=erase()。
+
+* 插入元素
+
+  ```cpp
+  insert(iterator pos, const T& val);	//在pos处插入val
+  insert(iterator pos, int count, const T& val);//pos处插入count个val
+  insert(iterator pos, iterStart, iterEnd);//在pos前插入[iterStart,iterEnd)元素
+  ```
+
+  
+
+# 15. STL算法
 ---
+> https://learn.microsoft.com/zh-cn/cpp/standard-library/algorithm?view=msvc-170
+
+## （1）查找
+
 * std::find 用于在容器中查找与给定值相等的第一个元素
+
 ```cpp
 #include <algorithm>
 
@@ -391,13 +470,16 @@ static tl::expected<int, string> init(int argc,
 ---
 `std::chrono::system_clock::time_point` 是 C++ 标准库中 `<chrono>` 头文件定义的一个时间点类型，用于表示系统时钟的时间点。`std::chrono` 是 C++11 引入的用于处理时间的库，它提供了丰富的功能来处理时间点、时间间隔和时间单位。
 
-### 1. **`std::chrono::system_clock`**
+## （1） `std::chrono::system_clock`
+
 `std::chrono::system_clock` 是一个系统时钟，它表示从某个固定时间点（通常是 1970 年 1 月 1 日 00:00:00 UTC，即 Unix 时间戳的起点）到当前时间的持续时间。它通常用于获取当前时间点或计算时间间隔。
 
-### 2. **`std::chrono::system_clock::time_point`**
+## （2）`std::chrono::system_clock::time_point`
+
 `std::chrono::system_clock::time_point` 是 `system_clock` 的时间点类型，表示从系统时钟的起始点（epoch）开始的时间点。它是一个强类型的时间点，可以进行时间运算和比较。
 
-### 3. **使用示例**
+## （3）使用示例
+
 以下是一些常见的使用方式：
 
 #### 获取当前时间点
@@ -462,7 +544,8 @@ int main() {
 }
 ```
 
-### 4. **时间点的转换**
+## （4）时间点的转换
+
 `std::chrono::system_clock` 提供了从时间点到时间戳（`std::time_t`）的转换，也可以通过 `std::ctime` 或 `std::put_time` 将时间点格式化为可读的字符串。
 
 #### 格式化时间点
@@ -486,20 +569,71 @@ int main() {
 }
 ```
 
-### 5. **总结**
-`std::chrono::system_clock::time_point` 是一个非常强大的工具，用于表示和处理系统时间点。它支持时间运算、时间间隔计算和时间点的格式化，广泛应用于需要精确时间处理的场景，例如日志记录、性能测量和时间同步等。
-
-# 25. filesystem::path替代string作为文件路径
+# 25. 使用filesystem读写文件
 ---
-使用 filesystem::path 替代 std::string 作为文件路径在C++编程中具有诸多优势，包括平台无关性、更丰富的功能、更好的类型安全、性能优化以及与 <filesystem> 库中其他功能的紧密集成。这些优势使得 filesystem::path 成为处理文件路径的推荐选择
+> * 使用了 C++ 的 <filesystem> 库（C++17 引入的）。
+> * 使用 filesystem::path 替代 std::string 作为文件路径在C++编程中具有诸多优势，包括平台无关性、更丰富的功能、更好的类型安全、性能优化以及与 <filesystem> 库中其他功能的紧密集成。这些优势使得 filesystem::path 成为处理文件路径的推荐选择
 filesystem::path 提供了许多用于操作路径的函数，如提取父目录、文件名、扩展名，拼接路径，判断是否为绝对路径等。
-```cpp
-namespace fs = std::filesystem;
-fs::path filePath = "example/path.txt";
-string filename=filePath.filename().string();//获取文件名
-```
+* 异常
+  ```cpp
+    fs::filesystem_error 
+  ```
+* 获取文件名：
+    ```cpp
+    namespace fs = std::filesystem;
+    fs::path filePath = "example/path.txt";
+    string filename=filePath.filename().string();//获取文件名
+    string parentPath=filePath.parent_path().string();//获取父目录路径
+    
+    ```
+* 拼接路径：
+  ```cpp
+    fs::path path1 = "dir1/";  // 路径1
+    fs::path path2 = "dir2";  // 路径2
+    fs::path combinedPath = path1 / path2;  // 路径拼接
+    combinePath /= "file.txt";  // 继续拼接路径
+  
+    std::cout << combinedPath.string() << std::endl;  // 输出: dir1/dir2/file.txt
+  
+  ```
+* 判断路径是否存在
+  ```cpp
+    fs::path filePath = "example/path.txt";
+    if (fs::exists(filePath)) {  // 检查文件是否存在
+        std::cout << "File exists: " << filePath.string() << std::endl;  // 输出文件存在信息    
+    }
+  ```
+* 创建文件
+  ```cpp
+    fs::path filePath = "example/newfile.txt";
+    //fs::ofstream
+    fs::ofstream file(filePath);  // 创建并打开文件
+    if (file.is_open()) {
+        file << "Hello, World!";  // 写入内容到文件
+        file.close();  // 关闭文件
+    }
+  ```
 
-# 26. 读取二进制数据
+* 删除文件：
+  ```cpp
+    fs::path filePath = "example/path.txt";
+    if (fs::exists(filePath)) {  // 检查文件是否存在
+        fs::remove(filePath);  // 删除文件
+    }
+  ```
+* 创建目录：
+  ```cpp
+    fs::path dirPath = "new_directory";
+    if (!fs::exists(dirPath)) {  // 检查目录是否存在
+        fs::create_directories(dirPath);  // 创建新目录
+        std::cout << "Directory created: " << dirPath.string() << std::endl;  // 输出创建的目录路径
+    }
+  ```
+
+
+
+
+# 26. 使用 C++ 标准库的 <fstream>读写文件
 ---
 ```cpp
 if (!fs::exists(fileName) || !fs::is_regular_file(fileName)) {  
@@ -520,9 +654,415 @@ if (!fs::exists(fileName) || !fs::is_regular_file(fileName)) {
       ifs.read((char *)df.pHead_, 32);  //读取32字节到df.pHead_指向的内存中。
 
 ```
+```cpp
+void DataFrame::writeToFile(string filePath) const {
+    //std::ofstream
+  std::ofstream ofs(filePath.c_str(),
+                    std::ofstream::binary | std::ofstream::app);
+  ofs.write(pHead_, 32);
+  ofs.write(pData_, dataBytes());
+  ofs.close();
+}
+```
 
 # 27. 字节序转换
+---
 be16toh/be32toh/be64toh
 hbe16/hbe32/hbe64把主机字节序转换为大端
 * 这几个函数比较hton/ntoh更新，也更通用。hton/ntoh主要用于网络编程。
+
+ # 28. git分支合作流程
+
+---
+
+## （1）新入职程序员的Git流程分析与改进建议
+
+#### **1. 拉取远程代码**
+- **当前操作**：  
+  ```bash
+  git pull origin master
+  ```
+- **分析**：  
+  - 此命令从远程`master`分支拉取最新代码到本地当前分支。  
+  - 如果本地当前分支是`master`，则直接运行`git pull`更简洁（默认拉取当前分支的远程代码）。  
+  - 如果本地有其他分支，建议先切换到`master`分支再拉取：  
+    ```bash
+    git checkout master
+    git pull
+    ```
+- **建议**：  
+  ```bash
+  git checkout master      # 切换到master分支
+  git pull origin master   # 明确拉取远程master分支的最新代码
+  ```
+
+---
+
+#### **2. 创建开发分支`dev`**
+- **当前操作**：  
+  ```bash
+  git checkout -b dev origin/master
+  ```
+  这条命令的作用是：
+
+创建新分支：创建一个名为 dev 的新分支。
+
+指定起点：新分支的起点是 origin/master（即远程仓库 origin 的 master 分支的最新提交）。
+
+自动切换：创建后直接切换到 dev 分支。
+- **分析**：  
+  - 从`origin/master`创建并切换到`dev`分支，符合常见的开发分支策略（如Git Flow中的`develop`分支）。  
+  - **优点**：隔离主分支（`master`），确保稳定代码不受开发影响。  
+  - **注意事项**：需与团队约定分支命名规范（如使用`develop`而非`dev`）。
+
+---
+
+#### **3. 创建特性分支`dev-feature-xxx`**
+- **当前操作**：  
+  ```bash
+  git checkout -b dev-feature-xxx
+  git push origin dev-feature-xxx
+  ```
+- **分析**：  
+  - 基于`dev`分支创建特性分支`dev-feature-xxx`，并在开发完成后推送至远程。  
+  - **优点**：特性分支独立，避免污染主开发分支。  
+  - **改进建议**：  
+    - 明确指定基于`dev`分支创建，避免歧义：  
+      ```bash
+      git checkout -b dev-feature-xxx dev
+      ```
+    - 推送时建议设置上游分支：  
+      ```bash
+      git push -u origin dev-feature-xxx
+      ```
+
+---
+
+#### **4. 合并特性分支到`dev`并清理**
+- **当前操作**：  
+  ```bash
+  git checkout dev
+  git merge dev-feature-xxx
+  git branch -d dev-feature-xxx
+  git push origin --delete dev-feature-xxx
+  ```
+- **分析**：  
+  - 合并特性分支到`dev`分支，删除本地和远程的特性分支。  
+  - **优点**：保持分支列表整洁，避免冗余。  
+  - **改进建议**：  
+    - 合并前建议使用`git merge --no-ff`保留合并记录：  
+      ```bash
+      git merge --no-ff dev-feature-xxx
+      ```
+    - 删除远程分支前，确保所有协作者已完成相关工作。  
+    - 若使用GitLab/GitHub，可通过PR（Pull Request）合并，自动清理分支。
+
+---
+
+#### **5. 推送`dev`分支并等待PR**
+- **当前操作**：  
+  ```bash
+  git push origin master
+  ```
+- **问题**：  
+  - 此命令将`dev`分支直接推送到远程`master`分支，**绕过代码审查流程**，不符合协作规范。  
+  - 正确流程应为：推送`dev`分支到远程，并创建从`dev`到`master`的PR。  
+- **正确操作**：  
+  ```bash
+  git push origin dev       # 推送dev分支到远程
+  # 在Git平台（如GitHub）创建PR：dev → master
+  ```
+- **注意事项**：  
+  - PR需经过团队代码审查后，由负责人合并到`master`。  
+  - 合并后，拉取最新的`master`代码到本地：  
+    ```bash
+    git checkout master
+    git pull origin master
+    ```
+
+---
+
+### **完整优化后的流程**
+```bash
+# 1. 更新本地master分支
+git checkout master
+git pull origin master
+
+# 2. 创建开发分支dev（基于最新master）
+git checkout -b dev origin/master
+
+# 3. 创建特性分支
+git checkout -b dev-feature-xxx dev
+git push -u origin dev-feature-xxx
+
+# ... 在dev-feature-xxx分支开发并提交 ...
+
+# 4. 合并到dev分支并清理
+git checkout dev
+git merge --no-ff dev-feature-xxx
+git branch -d dev-feature-xxx
+git push origin --delete dev-feature-xxx
+
+# 5. 推送dev分支并提交PR
+git push origin dev
+# 在Git平台创建PR：dev → master，等待审核合并
+```
+
+---
+
+### **关键改进点总结**
+1. **明确分支来源**：创建分支时指定基准分支（如`git checkout -b dev-feature-xxx dev`）。  
+2. **保留合并记录**：使用`--no-ff`选项避免丢失分支历史。  
+3. **代码审查流程**：通过PR合并而非直接推送至`master`。  
+4. **分支命名规范**：与团队统一命名（如`feature/xxx`、`develop`）。  
+
+通过上述优化，既能保证代码管理的规范性，又能提升团队协作效率。
+
+# 29. 常用分支类型
+---
+* main（或 master）：通常是项目的主分支，包含稳定、可发布的代码。
+* develop：用于日常开发的分支，开发者通常会将新功能合并到这个分支。
+* feature/*：用于开发新功能的分支，例如 feature/login 用于开发登录功能。
+* hotfix/*：用于修复紧急问题的分支，例如 hotfix/fix-bug。
+* release/*：用于准备发布的分支，例如 release/1.0。
+
+# 30. c++风格类型强转
+---
+```cpp
+*(uint8_t *)(pHead_ + 16) =
+          classId == 1 ? *(uint8_t *)(ptr + 16)
+                       : uint8_t(be16toh(*(uint16_t *)(ptr + 17)));
+```
+类型转换方式：
+
+* C风格的强制类型转换：(type)value
+* C++风格的函数风格转换：type(value)
+* 更安全的C++类型转换：static_cast<type>(value)、reinterpret_cast<type>(value)等
+# 31. 操纵器混合使用不同进制（如二进制、八进制、十六进制）标准输出
+* std::dec 设置十进制输出
+* std::hex 设置十六进制输出
+* std::oct 设置八进制输出
+* std::bin 设置二进制输出（非标准，但某些编译器支持）
+* std::fixed 设置固定宽度输出
+* std::boolalpha 设置布尔值以文本形式输出（true/false）
+* std::setprecision 设置浮点数输出的小数位数
+```cpp
+std::cout << std::hex << 255 << "\n"; // 输出十六进制：FF
+std::cout << std::oct << 255 << "\n"; // 输出八进制：377
+std::cout << std::dec << 255 << "\n"; // 输出十进制：255
+std::cout << std::bin << 255 << "\n"; // 可能输出二进制：11111111（取决于编译器）
+bool isTrue = true;
+std::cout << std::boolalpha << isTrue << "\n"; // 输出：true
+double pi = 3.14159;
+std::cout << std::fixed << std::setprecision(2) << pi << "\n"; // 输出：3.14
+```
+
+# 32. 数据库操作
+---
+* 异常
+sql_exception 异常类，用于处理SQL执行过程中出现的错误。
+
+* 从连接池获取连接
+  ```cpp
+    auto conn = pool.getConnection();
+  ```
+* 事务
+  ```cpp
+    conn.beginTransaction();
+  
+    conn.commit();
+  ```
+
+* ?是参数占位符在SQL语句中使用占位符（如?），然后在执行语句之前通过相应的方法（如setInt、setString等）设置这些占位符的值。这有助于防止SQL注入攻击，因为参数值会被数据库自动转义。
+
+* 预编译sql语句
+  创建一个`PreparedStatement`对象封装语句。
+  数据库可以预先编译这个语句，并且在之后的执行中只需要替换参数即可。以便之后可以多次执行这个语句，每次执行时可能使用不同的参数。
+  通过`bind`绑定值到占位符，第一个参数为占位符编号，从1开始。
+  ```cpp
+    //封装sql
+    PreparedStatement pps = conn.prepareStatement("INSERT INTO users (name, age) VALUES (?, ?)");
+    //绑定参数
+    pps.bind(1, "aaa");
+    pps.bind(2, 10);
+    //执行语句
+    pps.execute();
+  ```
+
+* 执行SQL语句（非查询）
+  ```cpp
+    conn.execute("delete from e_data_frm_info where class_id=? and "
+                 "abs(unix_timestamp(samp_time)*1000-?)<3",
+                 classId(), sampTime());
+  ```
+* 执行查询（对查询封装）
+    ```cpp
+    template <typename... Args>
+    tl::expected<ResultSet, std::string> queryDb(Connection &conn, const char *sql,Args... args)
+    {
+        try 
+        {
+            ResultSet result = conn.executeQuery(sql, args...);
+            if (result.next()) 
+            {
+                return result;
+            }    
+            else 
+            {
+                return tl::make_unexpected("not found in query: " + std::string(sql));
+            }
+        } 
+        catch (sql_exception &e)
+        {
+            return tl::make_unexpected("sql error for " + std::string(sql) + ": " +std::string(e.what()));
+        } 
+    }
+    ```
+    ```cpp
+        queryDb(conn,
+          "SELECT ch_pnts from e_data_frm_info WHERE class_id=? AND "
+          "ROUND(UNIX_TIMESTAMP(samp_time),3)>= ? AND "
+          "ROUND(UNIX_TIMESTAMP(samp_time),3) <= ?",
+          type, from, to)
+      .map([&](ResultSet rslt) {
+        do {
+          pnts += rslt.getInt("ch_pnts");
+          frms++;
+        } while (rslt.next());
+        res.send(Http::Code::Ok,
+                 (std::to_string(frms) + ":" + std::to_string(pnts)).c_str());
+      })
+      .map_error([&](auto err) {
+        if (err.find("not found in query") != string::npos) {
+          res.send(Http::Code::No_Content, "not found");
+        } else {
+          res.send(Http::Code::Bad_Request, "error");
+        }
+      });
+    ```
+
+# 33. std::thread
+
+---
+
+* 不能复制，只能移动。提供了：
+
+  ```cpp
+  thread(thread&& Other) noexcept;
+  thread& operator=(thread&& Other) noexcept;
+  ```
+
+  ```cpp
+   std::thread receiverths[constSize];
+  
+    for (int i = 0; i < constSize; i++) 
+    {
+      //非匿名对象是std::thread th(startReceiver, port)
+      //std::thread(startReceiver, port)创建的是一个匿名的临时thread对象，是右值，不用显式调用std::move
+      //receiverths[i] = std::move(std::thread(startReceiver, port));
+      receiverths[i] = std::thread(startReceiver, port);
+      receiverths[i].detach();
+    }
+  ```
+
+* 绑定函数
+
+  ```cpp
+  //构造绑定
+  thread(func,args);
+  //移动
+  thread th = thread(func, args);
+  ```
+
+* 作为类成员的thread绑定函数
+
+  ```cpp
+  class AA
+  {
+  private:
+      thread th;	//怎么绑定成员函数呢？
+      void func1();//无参数
+      void func2(args);//有参数
+  }
+  ```
+
+  ```cpp
+  //直接在 std::thread 的构造函数中绑定类的成员函数。
+  #include <iostream>
+  #include <thread>
+  
+  class MyClass 
+  {
+  public:
+      int args;
+      std::thread th1(&MyClass::func1, this); 
+      
+      MyClass
+      {
+          std::thread th2(&MyClass::func2, this, args);//传成员变量作为参数到func2
+          th2.detach();
+      }
+  };
+  
+  int main() 
+  {
+      MyClass obj;
+      return 0;
+  }
+  ```
+
+  ```cpp
+  //lambda调用成员函数
+  #include <iostream>
+  #include <thread>
+  
+  class MyClass 
+  {
+  public:
+      int args;
+      MyClass() 
+      {
+          std::thread worker1([this] {
+              this->func1();
+          });
+          worker1.detach();  
+          
+          std::thread worker2([this,args] {
+              this->func2(args);//传参到func2
+          });
+          worker2.detach();
+      }
+  };
+  
+  int main() {
+      MyClass obj;
+      return 0;
+  }
+  ```
+
+  ```cpp
+  //使用可调用对象绑定器 std::bind 将类的成员函数和 this 指针绑定，然后传递给 std::thread。
+  #include <iostream>
+  #include <thread>
+  #include <functional>
+  
+  class MyClass {
+  public:
+      int args;
+      MyClass() 
+      {
+          std::thread worker1(std::bind(&MyClass::func1, this));
+          worker1.detach(); 
+          
+          std::thread worker2(std::bind(&MyClass::func2, this, args));
+          worker2.detach(); 
+      }
+  };
+  
+  int main() {
+      MyClass obj;
+      return 0;
+  }
+  ```
+
   
