@@ -47,37 +47,58 @@ std::expected 跟踪内部对象是否已初始化，以及它是成功值还是
 它允许函数返回错误信息，而不是抛出异常。
 
 std::expected 跟踪内部对象是否已经被初始化。
-* has_value() 方法可以检查是否包含成功值 T，
-* has_error() 方法可以检查是否包含错误值 E。
+* `has_value() `判断是否包含成功值 T，通过`value()`获取成功值。
+
+* `has_error() `判断是否包含错误值 E，通过`error()`获取错误值。
+
+* 重载了!运算符
+
+  ```cpp
+  bool flag = !std::expected<int,string>
+  包含错误值时flag为true，包含成功值时为false
+  ```
+
 * 两种状态：
 成功状态：包含一个类型为 T 的对象。
 错误状态：包含一个类型为 E 的对象。
-这两种状态是互斥的，即一个 std::expected 对象在任何时刻只能包含一个成功值或一个错误值。
+**这两种状态是互斥的，即一个 std::expected 对象在任何时刻只能包含一个成功值或一个错误值。**
 
 ```cpp
 #include <iostream>
 #include <expected>
 #include <string>
 
-std::expected<int, std::string> divide(int a, int b) {
-    if (b == 0) {
-        return std::unexpected<std::string>("Division by zero");
+std::expected<int, std::string> divide(int a, int b) 
+{
+    if (b == 0) 
+    {
+        //这3种写法都行
+        return std::unexpected<std::string>("Division by zero");	
+        return std::expected<int,std::string>(std::unexpected<string>("Division by zero"));
+        return make_unexpected("Division by zero");
     }
     return a / b;
 }
 
-int main() {
+int main() 
+{
     auto result = divide(10, 2);
-    if (result.has_value()) {
+    if (result.has_value())
+    {
         std::cout << "Result: " << result.value() << std::endl;
-    } else {
+    } 
+    else 
+    {
         std::cerr << "Error: " << result.error() << std::endl;
     }
 
     auto result2 = divide(10, 0);
-    if (result2.has_value()) {
+    if (result2.has_value()) 
+    {
         std::cout << "Result: " << result2.value() << std::endl;
-    } else {
+    }
+    else 
+    {
         std::cerr << "Error: " << result2.error() << std::endl;
     }
 
@@ -85,37 +106,55 @@ int main() {
 }
 ```
 
-* 返回E对象
-```cpp
- template <class E>
-unexpected<typename std::decay<E>::type> make_unexpected(E &&e) {
-  return unexpected<typename std::decay<E>::type>(std::forward<E>(e));
-}
+* 指定成功或失败
 
-//使用
-   catch (fs::filesystem_error &e) {
-    cout << e.what();
-    return tl::make_unexpected(string("DataFrame::remove error for class_id ") +
-                               std::to_string(classId()) + ":" + e.what());
-  } catch (sql_exception &e) {
-    cout << e.what();
-    return tl::make_unexpected(string("DataFrame::remove error for class_id ") +
-                               std::to_string(classId()) + ":" + e.what());
-  } catch (std::exception &e) {
-    cout << e.what();
-    return tl::make_unexpected(string("DataFrame::remove error for class_id ") +
-                               std::to_string(classId()) + ":" + e.what());
+  ```cpp
+  int sock = 1;
+  //设置状态为成功，携带成功值为sock
+  return tl::expected<int,string>(sock);		
+  //设置状态为失败，携带失败值为"failed"
+  string str="failed";
+  //std::unexpected可传入std::unexpected的构造函数
+  return tl::expected<int,string>(std::unexpected<string>(str));
+  return std::unexpected<string>(str);
+  ```
+
+  ```cpp
+  //封装make_unexpected
+  template <class E>
+  unexpected<typename std::decay<E>::type> make_unexpected(E &&e) 
+  {
+    return unexpected<typename std::decay<E>::type>(std::forward<E>(e));
   }
-```
-
-* 根据返回不同执行不同操作
+  
+  //使用
+  catch (fs::filesystem_error &e)
+  {
+   	cout << e.what();
+   	return tl::make_unexpected(string("DataFrame::remove error for class_id ") +
+                              std::to_string(classId()) + ":" + e.what());
+   } 
+  catch (sql_exception &e)
+  {
+      cout << e.what();
+      return tl::make_unexpected(string("DataFrame::remove error for class_id ") +
+                                 std::to_string(classId()) + ":" + e.what());
+  } 
+  catch (std::exception &e) 
+  {
+      cout << e.what();
+      return tl::make_unexpected(string("DataFrame::remove error for class_id ") +
+                                 std::to_string(classId()) + ":" + e.what());
+  }
+  ```
+* 根据返回不同执行不同操作。链式写法：
+  
   map执行成功时操作，lambda捕获返回值T
   ma'p执行错误时操作，lambda捕获返回值E
+  
   ````cpp
     divide(10,2).map([](int val)){cout<<val<<endl;}
                 .map_error([](const std::string &err){cout<<err<<endl;});
-  
-    ```
 # 2. insert_or_assign
 ---
 insert_or_assign()是C++17中引入的一个成员函数模板，用于在std::map、std::unordered_map
@@ -129,7 +168,7 @@ insert_or_assign()是C++17中引入的一个成员函数模板，用于在std::m
     {
         return static_cast<T>(i * block_size) + first_index;
     }
-
+```
 # 4. inline变量
 ---
 https://blog.csdn.net/janeqi1987/article/details/100108589
@@ -137,11 +176,12 @@ https://cloud.tencent.com/developer/article/1979728
 使用Inline变量的动机
 
 * 在C++中，类结构中不允许初始化非const静态成员
-。例如：
 
-class MyClass {
-static std::string name = ""; // 编译错误
-};
+  ```cpp
+  class MyClass {
+  static std::string name = ""; // 编译错误
+  };
+  ```
 
 * 按照一次定义原则，一个变量或者实体只能出现一个编译单元内，除非这个变量或者实体使用了inline进行修饰。如下面的代码。如果在一个类中定义了一个静态成员变量，然后在类的外部进行初始化，本身符合一次定义原则。但是如果在多个CPP文件同时包含了该头文件，在链接时编译器会报错。
 ```cpp
@@ -153,7 +193,9 @@ static std::string msg;
 // 如 果 被 多 个CPP文 件 包 含 会 导 致 链 接ERROR
 std::string MyClass::msg{"OK"};
 ```
+
 * C++17中内联变量的使用可以帮助我们解决实际编程中的问题而又不失优雅。使用inline后，即使定义的全局对象被多个文件引用也只会有一个全局对象。如下面的代码，就不会出现之前的链接问题。
+
 ```cpp
 class MyClass {
 inline static std::string msg{"OK"};
@@ -415,9 +457,12 @@ int main() {
 }
 ```
 
-# 19. unique_ptr::get()
+# 19. unique_ptr
 ---
-获取裸指针
+`get()`获取裸指针
+
+重载了!运算符，`if(!uptr)`和`if(uptr==nullptr)`等价，都是判断是否指向空。
+
 # 20. 智能指针使用make_unique<>创建智能指针比用new更安全，因为它可以确保资源在异常发生时也能被正确释放。
 
 # 21.executeQuery占位符 
@@ -667,9 +712,13 @@ void DataFrame::writeToFile(string filePath) const {
 
 # 27. 字节序转换
 ---
+```cpp
 be16toh/be32toh/be64toh
-hbe16/hbe32/hbe64把主机字节序转换为大端
-* 这几个函数比较hton/ntoh更新，也更通用。hton/ntoh主要用于网络编程。
+//把主机字节序转换为大端
+hbe16/hbe32/hbe64
+```
+
+* 这几个函数比hton/ntoh新，也更通用。hton/ntoh主要用于网络编程。
 
  # 28. git分支合作流程
 
@@ -1063,6 +1112,153 @@ sql_exception 异常类，用于处理SQL执行过程中出现的错误。
       MyClass obj;
       return 0;
   }
+  ```
+
+
+# 34. git回滚
+
+---
+
+* 用暂存区回滚工作区
+
+  ```git
+  git checkout .
+  git checkout filename
+  ```
+
+* 回滚暂存区，工作区不变
+
+  ```cpp
+  git reset HEAD filename
+  ```
+
+* 用本地仓库回滚暂存区+工作区
+
+  ```cpp
+  git reset --hard <commit>
+  git reset --hard HEAD~0	#本次提交
+  ```
+
+# 35. 静态成员函数定义可写在头文件中
+
+---
+
+> static函数定义较短，逻辑简单时。
+>
+> 函数定义较长时，还是写在.cpp中。
+
+* 直接写在类声明中。这是隐式内联的，无需显式inline。
+
+  ```cpp
+  // MyClass.h
+  #ifndef MYCLASS_H
+  #define MYCLASS_H
+  
+  #include <iostream>
+  
+  class MyClass {
+  public:
+      static void staticFunc() {
+          std::cout << "Static function called!" << std::endl;
+      }
+  };
+  
+  #endif // MYCLASS_H
+  ```
+
+* 通过显式inline，可写在类声明外部，但也在头文件里。
+
+  ```cpp
+  // MyClass.h
+  #ifndef MYCLASS_H
+  #define MYCLASS_H
+  
+  #include <iostream>
+  
+  class MyClass {
+  public:
+      static void staticFunc();
+  };
+  
+  //显式内联，写在类声明外部
+  inline void MyClass::staticFunc() {
+      std::cout << "Static function called!" << std::endl;
+  }
+  
+  #endif // MYCLASS_H
+  ```
+
+# 36. socket
+
+---
+
+## （1）可选项
+
+```cpp
+int setsockopt(int sockfd, int level, int optname, const void *optval, socklen_t optlen);
+sockfd：套接字描述符。
+level：选项级别。通常为 SOL_SOCKET 或其他协议相关的级别（如 IPPROTO_TCP）。
+optname：选项名称。
+optval：选项值的指针。
+optlen：选项值的长度。
+```
+
+* 端口被释放后立即可重用
+
+  ```cpp
+   callLibFunc(std::bind(setsockopt, sock, SOL_SOCKET, SO_REUSEADDR,
+                                       &on, sizeof(on)),
+                             "sock::create/setsockopt");//setsockopt设置socket可选项：服务端释放端口后端口立即可以被重用
+  ```
+
+* 启用或禁用 TCP 保活机制
+
+  ```cpp
+  //enableKeepAlive：通常是一个布尔值（int 类型），1 表示启用，0 表示禁用
+  int enableKeepAlive = 1;
+  setsockopt(sock, SOL_SOCKET, SO_KEEPALIVE, &enableKeepAlive, sizeof(enableKeepAlive));
+  ```
+
+* 设置空闲多久开始保活探测（以秒为单位）
+
+  ```cpp
+  int keepIdle = 60; // 60秒
+  setsockopt(sock, IPPROTO_TCP, TCP_KEEPIDLE, &keepIdle, sizeof(keepIdle));
+  ```
+
+* 设置保活探测间隔（s为单位）
+
+  ```cpp
+  int keepInterval = 10; // 10秒
+  setsockopt(sock, IPPROTO_TCP, TCP_KEEPINTVL, &keepInterval, sizeof(keepInterval));
+  ```
+
+* 在宣布对端无法连接前的保活探测最大尝试次数
+
+  ```cpp
+  int keepCount = 3;
+  setsockopt(sock, IPPROTO_TCP, TCP_KEEPCNT, &keepCount, sizeof(keepCount));
+  ```
+
+* 示例
+
+  ```cpp
+  int enableKeepAlive = 1;
+  int keepIdle = 1 * 60; 
+  int keepInterval = 5;  
+  int keepCount = 3;                
+  
+  setsockopt(sock, SOL_SOCKET, SO_KEEPALIVE, &enableKeepAlive, sizeof(enableKeepAlive));
+  setsockopt(sock, IPPROTO_TCP, TCP_KEEPIDLE, &keepIdle, sizeof(keepIdle));
+  setsockopt(sock, IPPROTO_TCP, TCP_KEEPINTVL, &keepInterval, sizeof(keepInterval));
+  setsockopt(sock, IPPROTO_TCP, TCP_KEEPCNT, &keepCount, sizeof(keepCount));
+  
+  /*
+  那么保活机制的流程如下：
+  TCP 连接空闲 60 秒后，开始发送第一个保活探测。
+  如果没有收到响应，每隔 10 秒发送一次保活探测，共发送 3 次。
+  如果 3 次探测后仍未收到响应，TCP 连接将被关闭。
+  */
   ```
 
   
