@@ -32,19 +32,19 @@
 ---
 
 > std::expected 是 C++23 中引入的一个新特性，但它已经在许多现代C++库（如 Boost.Outcome）中被广泛讨论和使用。
-std::expected 是一个模板类，用于表示函数的返回值，它可以包含一个成功值（T）或者一个错误值（E）。它的设计目标是提供一种更安全、更灵活的方式来处理错误情况，相比传统的返回值和异常机制，它有以下特点：
+std::expected 是一个模板类，用于表示函数的返回值，它可以包含一个成功值（T）或者一个错误值（E）。**它的设计目标是提供一种更安全、更灵活的方式来处理错误情况，**相比传统的返回值和异常机制，它有以下特点：
 封装成功值和错误值：
 如果操作成功，std::expected 包含一个类型为 T 的值。
 如果操作失败，std::expected 包含一个类型为 E 的错误值。
 生命周期管理：
-std::expected 负责管理内部存储的 T 或 E 的生命周期。
-内部对象的初始化和销毁由 std::expected 完全控制。
+**std::expected 负责管理内部存储的 T 或 E 的生命周期。**
+**内部对象的初始化和销毁由 std::expected 完全控制。**
 状态跟踪：
 std::expected 跟踪内部对象是否已初始化，以及它是成功值还是错误值。
 提供方法（如 has_value() 或 has_error()）来检查当前状态。
-替代异常处理：
-与异常相比，std::expected 是一种更显式的错误处理方式，避免了异常的性能开销和复杂性。
-它允许函数返回错误信息，而不是抛出异常。
+**替代异常处理：**
+**与异常相比，std::expected 是一种更显式的错误处理方式，避免了异常的性能开销和复杂性。**
+**它允许函数返回错误信息，而不是抛出异常。**
 
 std::expected 跟踪内部对象是否已经被初始化。
 * `has_value() `判断是否包含成功值 T，通过`value()`获取成功值。
@@ -153,7 +153,19 @@ int main()
   ma'p执行错误时操作，lambda捕获返回值E
   
   ````cpp
-    divide(10,2).map([](int val)){cout<<val<<endl;}
+  std::expected<int, std::string> divide(int a, int b) 
+  {
+      if (b == 0) 
+      {
+          //这3种写法都行
+          return std::unexpected<std::string>("Division by zero");	
+          return std::expected<int,std::string>(std::unexpected<string>("Division by zero"));
+          return make_unexpected("Division by zero");
+      }
+      return a / b;
+  }  
+  
+  divide(10,2).map([&](int val)){cout<<val<<endl;}
                 .map_error([](const std::string &err){cout<<err<<endl;});
 # 2. insert_or_assign
 ---
@@ -220,7 +232,7 @@ inline MyClass myGlobalObj;
 assert(document.HasMember("hello"));
 assert(document["hello"].IsString());
 printf("hello = %s\n", document["hello"].GetString());
-
+```
 # 7. hpp头文件
 .h文件用于需要兼容C语言的场合，.hpp文件用于纯C++的场合，现代C++项目中通常只用.hpp文件。
 使用模板的类或函数通常放在.hpp文件中，因为编译器需要看到模板的定义才能实例化，即定义和声明都要放在.hpp文件中。
@@ -228,8 +240,8 @@ printf("hello = %s\n", document["hello"].GetString());
 * 头文件是纯C++编写的，使用.hpp扩展名。
 * 头文件中有类声明，使用.hpp扩展名。
 
-#8. std::tuple
----
+# 8. std::tuple
+
 > std::tuple 是 C++11 引入的一个标准库类型，用于存储固定数量的元素，每个元素可以有不同的数据类型。它类似于一个轻量级的结构体或联合体，但不具备命名字段的特性。
 
 * 使用场景：
@@ -258,11 +270,12 @@ int main() {
 
     return 0;
 }
+```
 
 # 9. std::atomic_bool
 ---
 > 原子类型是C++11引入的，用于提供对单个变量的无锁访问和修改。std::atomic_bool 是 std::atomic 的一个特化版本，专门设计用来存储
-bool 类型的值，并保证对该值的所有操作都是原子的。
+> bool 类型的值，并保证对该值的所有操作都是原子的。
 * 读操作：
 store(val)：将一个新值存储到原子变量中。
 load()：从原子变量中读取当前值。
@@ -280,7 +293,7 @@ memory_order_seq_cst	最严格的顺序，确保所有操作的顺序对所有�
 # 11. std::priority_queue
 ---
 > std::priority_queue 是 C++ STL 中的一个容器适配器，它提供了一个优先队列的实现。在优先队列中，每个元素都有一个优先级，并且总是按照元素的优先级顺序进行排序。它是一个最大堆（默认情况下），这意味着每次访问队列顶部时，都会得到优先级最高的元素。
-在默认情况下，std::priority_queue使用std::less<T>作为比较函数，这意味着元素是按照从小到大的顺序排列的（但堆顶元素是最大的）
+> 在默认情况下，std::priority_queue使用std::less<T>作为比较函数，这意味着元素是按照从小到大的顺序排列的（但堆顶元素是最大的）
 
 * 定义：
 ```cpp
@@ -294,12 +307,13 @@ struct Compare {
 };
 std::priority_queue<int, std::vector<int>, Compare> pqMin;
 ```
+
 * 基本操作：
-push(value)：将一个元素添加到优先队列中。
-top()：返回优先级最高的元素的引用（但不移除它）。
-pop()：从优先队列中删除优先级最高的元素。
-empty()：检查优先队列是否为空。
-size()：返回优先队列中的元素数量。
+  push(value)：将一个元素添加到优先队列中。
+  top()：返回优先级最高的元素的引用（但不移除它）。
+  pop()：从优先队列中删除优先级最高的元素。
+  empty()：检查优先队列是否为空。
+  size()：返回优先队列中的元素数量。
 
 # 12. std::map判断Key是否存在
 ---
@@ -335,9 +349,9 @@ size()：返回优先队列中的元素数量。
 ---
 > https://learn.microsoft.com/zh-cn/cpp/standard-library/algorithm?view=msvc-170
 
-## （1）查找
+## （1）std::find
 
-* std::find 用于在容器中查找与给定值相等的第一个元素
+* 用于在容器中查找与给定值相等的第一个元素
 
 ```cpp
 #include <algorithm>
@@ -364,7 +378,21 @@ pred：谓词函数，用于判断每个元素是否满足条件。它接受一�
 如果没有找到满足条件的元素，则返回 last迭代器。
 ```
 
+## （2）std::min_element和std::max_element
+
+在区间内查找最值
+
+```cpp
+//在指定区间[start,end)内查找最小值，返回迭代器
+iterator pos = std::min_element(iterator start, iterator end);
+int posIndex = pos-start;//index
+auto minVal = *pos;//值
+```
+
+
+
 # 16. 使用命名空间别名
+
 ---
 > 不用写那么长的命名空间前缀了。
 
@@ -513,17 +541,92 @@ static tl::expected<int, string> init(int argc,
 
 # 24. 时间
 ---
-`std::chrono::system_clock::time_point` 是 C++ 标准库中 `<chrono>` 头文件定义的一个时间点类型，用于表示系统时钟的时间点。`std::chrono` 是 C++11 引入的用于处理时间的库，它提供了丰富的功能来处理时间点、时间间隔和时间单位。
+## （0）std::time_t时间戳
 
-## （1） `std::chrono::system_clock`
+> `std::time_t`是C语言中表示时间的方式，通常是一个整数类型，表示自1970年1月1日以来秒的数（Unix时间戳）。
+>
+> ```cpp
+> #include <ctime>
+> ```
+>
+> - **简单通用**：广泛用于C和C++的遗留代码中，兼容性好。
+> - **精度较低**：通常只支持秒级精度。
+> - **无类型安全**：直接操作整数，容易出现单位混淆。
 
-`std::chrono::system_clock` 是一个系统时钟，它表示从某个固定时间点（通常是 1970 年 1 月 1 日 00:00:00 UTC，即 Unix 时间戳的起点）到当前时间的持续时间。它通常用于获取当前时间点或计算时间间隔。
+```cpp
+#include <ctime>
+#include <iostream>
 
-## （2）`std::chrono::system_clock::time_point`
+int main()
+{
+    // 获取当前时间戳
+    std::time_t now_time = std::time(nullptr);
+    std::cout << "Current time (std::time_t): " << std::ctime(&now_time);
 
-`std::chrono::system_clock::time_point` 是 `system_clock` 的时间点类型，表示从系统时钟的起始点（epoch）开始的时间点。它是一个强类型的时间点，可以进行时间运算和比较。
+    // 转换为uint64_t
+    uint64_t timestamp = static_cast<uint64_t>(now_time);
+    std::cout << "Timestamp (seconds): " << timestamp << std::endl;
 
-## （3）使用示例
+    return 0;
+}
+```
+
+## （2）`uint64_t`时间戳
+
+> `uint64_t`是一个无符号64位整数类型，常用于存储时间戳。它可以表示更大的范围，通常用于需要高精度或长时间跨度的场景。
+>
+> - **灵活性高**：可以存储任何时间单位（秒、毫秒、微秒等）。
+> - **无类型安全**：需要手动管理时间单位，容易出错。
+> - **范围大**：64位整数可以表示非常大的数值，适合长时间跨度。
+>
+> 
+
+## （3）std::chrono
+
+```cpp
+#include<chrono>
+using namespace std;
+using namespace chrono;	//这一行一定写在using namespace std之后，否则报错
+```
+
+`std::chrono` 是 C++11 引入的用于处理时间的库，支持不同的时钟源，如`system_clock`（系统时钟）、`steady_clock`（单调时钟）和`high_resolution_clock`（高分辨率时钟）
+
+```cpp
+uint64_t timestamp;	//时间戳
+std::chrono::milliseconds ms(timestamp);//时间戳初始化chrono时间点
+std::chrono::system_clock::time_point timePoint(ms);
+```
+
+## （4） `std::chrono::system_clock`
+
+`std::chrono::system_clock` 是系统时间，是不稳定的时钟，是可以自行设置的。它表示从某个固定时间点（通常是epoch，即 1970 年 1 月 1 日 00:00:00 UTC，这是类 Unix 系统中广泛使用的标准时间起点）到当前时间的持续时间。它通常用于获取当前时间点或计算时间间隔。
+
+### `std::chrono::system_clock::time_point`
+
+`std::chrono::system_clock::time_point` 是 `system_clock` 的时间点类型，表示从**系统时钟的起始点（epoch）**开始的时间点。它是一个强类型的时间点，可以进行时间运算和比较。
+
+```cpp
+auto now = system_clock::now();
+```
+
+### ``std::chrono::system_clock::duration`
+
+```cpp
+auto duration = duration_cast<microseconds>(start-end);
+cout<<(double)(duration.count())<<endl;//ms
+```
+
+## （5）**std::chrono::high_resolution_clock** 
+
+`std::chrono::high_resolution_clock`C++11最高的精度的时钟，精确到ns
+
+```cpp
+auto now = high_resolution_clock::now();
+auto duration = now.time_since_epoch();//time_since_epoch() 是 time_point 对象的一个方法，用于获取从“纪元”（epoch）到当前时间的时间间隔。
+auto microSecs = duration_cast<microseconds>(duration).count();
+```
+
+## （6）使用示例
 
 以下是一些常见的使用方式：
 
@@ -589,11 +692,72 @@ int main() {
 }
 ```
 
-## （4）时间点的转换
+## （7）当地时间：std::localtime
+
+> `std::localtime` 是 C++ 标准库中的一个函数，用于**将时间值（通常表示为自纪元（Epoch，即1970年1月1日00:00:00 UTC）以来的秒数）转换为当地时间**（`tm` 结构）。
+>
+> ```cpp
+> #include <ctime>
+> ```
+
+```cpp
+std::chrono::system_clock::time_point timePoint(ms);
+std::time_t timeT = std::chrono::system_clock::to_time_t(timePoint);
+```
+
+```cpp
+std::tm* std::localtime(const std::time_t* time_ptr);
+//成功时，返回一个指向 std::tm 结构的指针，该结构表示当地时间。
+```
+
+```cpp
+tm 结构
+
+std::tm 结构用于表示分解的时间，包含以下成员：
+
+tm_sec：秒（0-60，允许闰秒）
+tm_min：分（0-59）
+tm_hour：小时（0-23）
+tm_mday：日期（1-31）
+tm_mon：月份（0-11，0代表一月）
+tm_year：年份，自1900年起的年数
+tm_wday：星期几（0-6，0代表星期日）
+tm_yday：一年中的第几天（0-365，0代表1月1日）
+tm_isdst：夏令时标志（正值代表夏令时，0代表非夏令时，负值代表信息不可用）
+```
+
+## （8）时间戳转换
 
 `std::chrono::system_clock` 提供了从时间点到时间戳（`std::time_t`）的转换，也可以通过 `std::ctime` 或 `std::put_time` 将时间点格式化为可读的字符串。
 
-#### 格式化时间点
+#### `std::chrono` -> `std::time_t`：
+
+```cpp
+auto now = std::chrono::system_clock::now();
+std::time_t now_time = std::chrono::system_clock::to_time_t(now);
+```
+
+#### `std::time_t` -> `std::chrono`：
+
+```cpp
+std::time_t now_time = std::time(nullptr);
+auto now = std::chrono::system_clock::from_time_t(now_time);
+```
+
+#### `std::chrono` -> `uint64_t`：
+
+```cpp
+auto now = std::chrono::system_clock::now();
+uint64_t timestamp_sec = std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch()).count();
+```
+
+#### `uint64_t` -> `std::chrono`：
+
+```cpp
+uint64_t timestamp_sec = ...;
+auto now = std::chrono::system_clock::time_point(std::chrono::seconds(timestamp_sec));
+```
+
 ```cpp
 #include <iostream>
 #include <chrono>
@@ -601,7 +765,8 @@ int main() {
 #include <sstream>
 #include <locale> // 用于设置本地化
 
-int main() {
+int main() 
+{
     auto now = std::chrono::system_clock::now();
     std::time_t now_c = std::chrono::system_clock::to_time_t(now);
 
@@ -616,8 +781,8 @@ int main() {
 
 # 25. 使用filesystem读写文件
 ---
-> * 使用了 C++ 的 <filesystem> 库（C++17 引入的）。
-> * 使用 filesystem::path 替代 std::string 作为文件路径在C++编程中具有诸多优势，包括平台无关性、更丰富的功能、更好的类型安全、性能优化以及与 <filesystem> 库中其他功能的紧密集成。这些优势使得 filesystem::path 成为处理文件路径的推荐选择
+> * 使用了 C++ 的\<filesystem> 库（C++17 引入的）。
+> * 使用 filesystem::path 替代 std::string 作为文件路径在C++编程中具有诸多优势，包括平台无关性、更丰富的功能、更好的类型安全、性能优化以及与 \<filesystem> 库中其他功能的紧密集成。这些优势使得 filesystem::path 成为处理文件路径的推荐选择
 filesystem::path 提供了许多用于操作路径的函数，如提取父目录、文件名、扩展名，拼接路径，判断是否为绝对路径等。
 * 异常
   ```cpp
@@ -629,7 +794,6 @@ filesystem::path 提供了许多用于操作路径的函数，如提取父目录
     fs::path filePath = "example/path.txt";
     string filename=filePath.filename().string();//获取文件名
     string parentPath=filePath.parent_path().string();//获取父目录路径
-    
     ```
 * 拼接路径：
   ```cpp
@@ -639,7 +803,6 @@ filesystem::path 提供了许多用于操作路径的函数，如提取父目录
     combinePath /= "file.txt";  // 继续拼接路径
   
     std::cout << combinedPath.string() << std::endl;  // 输出: dir1/dir2/file.txt
-  
   ```
 * 判断路径是否存在
   ```cpp
@@ -678,8 +841,15 @@ filesystem::path 提供了许多用于操作路径的函数，如提取父目录
 
 
 
-# 26. 使用 C++ 标准库的 <fstream>读写文件
+# 26. 使用 C++ 标准库的 \<fstream>读写文件
 ---
+打开模式：
+
+```cpp
+std::ios::trunc	//截断：文件不存在则创建，文件存在则清空
+std::ios::app	//追加
+```
+
 ```cpp
 if (!fs::exists(fileName) || !fs::is_regular_file(fileName)) {  
         //is_regular_file()检查是否为普通文件，而非目录等。如果路径不存在或不是一个常规文件，则返回false。
@@ -701,9 +871,8 @@ if (!fs::exists(fileName) || !fs::is_regular_file(fileName)) {
 ```
 ```cpp
 void DataFrame::writeToFile(string filePath) const {
-    //std::ofstream
-  std::ofstream ofs(filePath.c_str(),
-                    std::ofstream::binary | std::ofstream::app);
+    //std::ofstream::binary和std::ofstream::app等价于std::ios::binary和std::ios::app
+  std::ofstream ofs(filePath.c_str(), std::ofstream::binary | std::ofstream::app);
   ofs.write(pHead_, 32);
   ofs.write(pData_, dataBytes());
   ofs.close();
@@ -715,7 +884,7 @@ void DataFrame::writeToFile(string filePath) const {
 ```cpp
 be16toh/be32toh/be64toh
 //把主机字节序转换为大端
-hbe16/hbe32/hbe64
+htobe16/htobe32/htobe64
 ```
 
 * 这几个函数比hton/ntoh新，也更通用。hton/ntoh主要用于网络编程。
@@ -990,6 +1159,36 @@ sql_exception 异常类，用于处理SQL执行过程中出现的错误。
       });
     ```
 
+* 获取查询结果
+
+  `ResultSet`表示查询得到的集合。
+
+  `setFetchSize(int n)`表示每次从数据库只获取n条记录。
+
+  ```cpp
+  ResultSet result =
+          conn.executeQuery("SELECT MAX(cmd_seq) as maxsq FROM e_send_frm_log "
+                            "WHERE  cmd_id=?", // addr=? AND
+                            cmdId);            // addr,
+                                               // conn.close();
+      ;
+  result.setFetchSize(1);	//查询只获取1条记录。在SQL内用LIMIT 1也可。
+  if(result.next())
+  {
+      int max = result.getInt("maxsq");//只获取maxsq的1条记录
+  }
+  ```
+
+
+* 函数
+
+  ```sql
+  FLOOR()	#<=括号中值
+  FROM_UNIXTIME()	#用于将UNIX时间戳转换为日期时间字符串。
+  ```
+
+  
+
 # 33. std::thread
 
 ---
@@ -1261,4 +1460,397 @@ optlen：选项值的长度。
   */
   ```
 
+
+# 37. 构造帧
+
+---
+
+* 内存地址指针用`void*`，只表示起始地址
+
+* 使用具体长度时：
+
+  ```cpp
+  void* p;
+  *(uint32_t)p=12;	//p的前4B存储12这个数字
+  *(uint64_t)p=12;	//p的前8字节存储
+  ```
+
   
+
+# 38. 执行脚本文件
+
+---
+
+在Linux中，*system()*函数用于执行一个由字符串表示的命令。它通过调用*/bin/sh -c*来执行命令，并在命令执行完毕后返回。这个函数的定义如下：
+
+```cpp
+#include <stdlib.h>
+
+int system(const char *command);
+```
+
+# 39. 查找文件
+
+---
+
+```shell
+find ./ -type f -name "curl.h"#查找文件
+
+find ./ -type d -name "curl"#查找目录
+```
+
+# 40. libcurl
+
+---
+
+> 使用方法：https://www.cnblogs.com/heluan/p/10177475.html
+>
+> 安装：
+>
+> ```bash
+> sudo apt-get install libcurl4-openssl-dev
+> curl --version	#查看版本
+> ```
+
+## （1）通过FTP向服务器上传数据文件
+
+curl_easy_setopt设定选项：
+
+* CURLOPT_URL
+
+* CURLOPT_USERNAME
+* CURLOPT_PASSWORD
+* CURLOPT_UPLOAD
+* CURLOPT_READFUNCTION
+* CURLOPT_READDATA
+
+### **服务器基础配置**
+
+#### **(1) 安装 FTP 服务器**
+
+- **Linux（vsftpd）**：
+
+  bash
+
+  复制
+
+  ```
+  sudo apt install vsftpd  # Debian/Ubuntu
+  sudo systemctl start vsftpd
+  sudo systemctl enable vsftpd
+  ```
+
+- **Windows**：使用 `FileZilla Server` 或 `IIS FTP`。
+
+#### **(2) 配置 FTP 用户和权限**
+
+- **创建专用用户**（推荐）：
+
+  bash
+
+  复制
+
+  ```
+  sudo useradd -m ftpuser  # 创建用户
+  sudo passwd ftpuser      # 设置密码
+  ```
+
+- **设置用户目录权限**：
+
+  bash
+
+  复制
+
+  ```
+  sudo chown -R ftpuser:ftpuser /home/ftpuser  # 确保用户对目录有写权限
+  ```
+
+#### **(3) 允许写入操作**
+
+- **修改 FTP 服务器配置**（以 `vsftpd` 为例，配置文件 `/etc/vsftpd.conf`）：
+
+  ini
+
+  复制
+
+  ```
+  write_enable=YES          # 允许写入
+  local_enable=YES          # 允许本地用户登录
+  anonymous_enable=NO       # 禁用匿名登录（按需）
+  chroot_local_user=YES     # 限制用户在其主目录
+  allow_writeable_chroot=YES
+  ```
+
+------
+
+### **2. 防火墙和端口开放**
+
+#### **(1) 开放 FTP 端口**
+
+- **控制连接端口**：默认 `21/tcp`。
+- **数据连接端口**：
+  - **主动模式（PORT）**：服务器从 `20/tcp` 主动连接客户端。
+  - **被动模式（PASV）**：客户端连接服务器的随机高端口（需配置范围）。
+
+#### **(2) 配置被动模式端口范围**
+
+- **修改 `vsftpd.conf`**：
+
+  ini
+
+  复制
+
+  ```
+  pasv_enable=YES
+  pasv_min_port=50000      # 被动模式最小端口
+  pasv_max_port=51000      # 被动模式最大端口
+  pasv_address=YOUR_SERVER_PUBLIC_IP  # 服务器公网IP（若在NAT后）
+  ```
+
+- **开放防火墙端口**：
+
+  bash
+
+  复制
+
+  ```
+  sudo ufw allow 21/tcp
+  sudo ufw allow 50000:51000/tcp
+  ```
+
+------
+
+### **3. SSL/TLS 加密（可选）**
+
+若需通过 **FTPS**（FTP over SSL）加密传输：
+
+#### **(1) 生成 SSL 证书**
+
+bash
+
+复制
+
+```
+sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+    -keyout /etc/ssl/private/vsftpd.key \
+    -out /etc/ssl/certs/vsftpd.crt
+```
+
+#### **(2) 启用 SSL 支持**
+
+修改 `vsftpd.conf`：
+
+ini
+
+复制
+
+```
+ssl_enable=YES
+allow_anon_ssl=NO
+force_local_data_ssl=YES
+force_local_logins_ssl=YES
+rsa_cert_file=/etc/ssl/certs/vsftpd.crt
+rsa_private_key_file=/etc/ssl/private/vsftpd.key
+```
+
+#### **(2) 关键选项说明**
+
+- **被动模式**（默认启用）：
+
+  c
+
+  复制
+
+  ```
+  curl_easy_setopt(curl, CURLOPT_FTP_USE_EPSV, 1L);  // 推荐使用 EPSV
+  ```
+
+- **主动模式**（不推荐）：
+
+  c
+
+  复制
+
+  ```
+  curl_easy_setopt(curl, CURLOPT_FTPPORT, "-");  // 禁用客户端端口
+  curl_easy_setopt(curl, CURLOPT_FTP_USE_EPRT, 0L);
+  ```
+
+- **SSL/TLS 加密**：
+
+  c
+
+  复制
+
+  ```
+  curl_easy_setopt(curl, CURLOPT_USE_SSL, CURLUSESSL_ALL);  // 强制 SSL
+  curl_easy_setopt(curl, CURLOPT_CAINFO, "/path/to/cacert.pem");  // CA 证书
+  ```
+
+### **客户端上传文件代码**
+
+```cpp
+    CURL *curl;
+    CURLcode res;
+
+    std::string ftp_url = hzi::config.ftpUrl + fileName;
+    std::string username = hzi::config.ftpUserName;
+    std::string password = hzi::config.ftpPassWord;
+
+    cout<<"ftp_url :"<<ftp_url<<" , fileName = "<<fileName<<" , dataFile = "<<dataFile<<endl;
+
+    curl_global_init(CURL_GLOBAL_DEFAULT);
+    curl = curl_easy_init();
+
+    if (curl) {
+      curl_easy_setopt(curl, CURLOPT_URL, ftp_url.c_str());// 设置FTP URL地址
+
+      // Specify username and password
+      curl_easy_setopt(curl, CURLOPT_USERNAME, username.c_str());
+      curl_easy_setopt(curl, CURLOPT_PASSWORD, password.c_str());
+
+      // Enable uploading
+      curl_easy_setopt(curl, CURLOPT_UPLOAD, 1L);// 设置上传模式
+
+      // Specify the read callback function
+      curl_easy_setopt(curl, CURLOPT_READFUNCTION, read_callback);
+      curl_easy_setopt(curl, CURLOPT_READDATA, &dataFile);//指定传入字符串dataFile。
+
+      // Perform the request, res will get the return code
+      res = curl_easy_perform(curl);
+
+      // Check for errors
+      if (res != CURLE_OK) {
+        //  fprintf(stderr, "curl_easy_perform() failed: %s\n",
+        //  curl_easy_strerror(res));
+        std::cout << "curl_easy_perform() failed: %s\n";
+      } else {
+        std::cout << "File uploaded successfully!" << std::endl;
+      }
+
+      // Cleanup
+      curl_easy_cleanup(curl);
+    }
+
+    curl_global_cleanup();
+  }
+```
+
+```cpp
+//回调函数，用于读取数据。除了根据curl_easy_setopt处实际传入类型强转void*指针，下面写法基本固定。
+size_t read_callback(void *ptr, size_t size, size_t nmemb, void *stream) {
+  std::string *data = static_cast<std::string *>(stream);//调用处stream传入字符串的指针
+  size_t buffer_size = size * nmemb;//缓冲区：nmemb为单元数，size为单元大小
+
+  if (data->size() < buffer_size) {
+    buffer_size = data->size();
+  }
+
+  memcpy(ptr, data->c_str(), buffer_size);
+  data->erase(0, buffer_size);
+
+  return buffer_size;
+}
+```
+
+# 41. unix信号定时器
+
+----
+
+> `struct itimerval` 是一个在 Unix-like 系统（如 Linux）中用于设置定时器时间间隔的结构体。该结构体通常与 `setitimer()` 系统调用配合使用，用于配置不同类型的定时器。
+>
+> 定时器类型：
+>
+> * 实时定时器 `ITIMER_REAL`：到期时发送 `SIGALRM` 信号
+>
+> * 虚拟定时器 `ITIMER_VIRTUAL`：进程在用户态下的执行时间累计达到设定值时发送 `SIGVTALRM`
+>
+> * 性能定时器 `ITIMER_PROF`：进程在用户态和内核态下的总执行时间达到设定值时发送 `SIGPROF` 信号
+
+## （1）itimerval
+
+```cpp
+struct itimerval
+{
+    struct timeval it_interval; /* 定时器间隔时间 */
+    struct timeval it_value;    /* 定时器初始到期时间 */
+};
+
+struct timeval
+{
+    int tv_sec;//s
+    int tv_usec;//us
+}
+```
+
+## （2）setitimer
+
+```cpp
+#include <sys/time.h>
+
+int setitimer(int which, const struct itimerval *new_value, struct itimerval *old_value);
+
+//which-定时器类型
+//new_value-设置定时器的新值
+//old_value-存储定时器之前的值。如果不需要旧值，可以传递 NULL
+```
+
+## （3）demo
+
+```cpp
+struct sigaction sa;
+struct itimerval client_timer;
+void start_timerOnce(int sec, int usec){
+    // 设置定时器信号的处理函数
+    sa.sa_handler = timer_handler_client;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = 0;
+    sigaction(SIGALRM, &sa, NULL);
+
+    // 设置定时器的时间间隔
+    client_timer.it_value.tv_sec = sec;//首次到期时间，单位为秒和微秒
+    client_timer.it_value.tv_usec = usec;
+    //定时器不重复
+    client_timer.it_interval.tv_sec = 0;//重复间隔时间，单位为秒和微秒
+    client_timer.it_interval.tv_usec = 0;
+
+    // 开启定时器
+    setitimer(ITIMER_REAL, &client_timer, NULL);
+}
+void stop_timer(){
+    client_timer.it_value.tv_sec = 0;
+    client_timer.it_value.tv_usec = 0;
+    client_timer.it_interval.tv_sec = 0;
+    client_timer.it_interval.tv_usec = 0;
+    setitimer(ITIMER_REAL, &client_timer, NULL);
+}
+```
+
+## 42. 结构体赋值也可初始化列表
+
+---
+
+```cpp
+st.a=1;	//给成员赋值
+```
+
+```cpp
+//列表初始化
+ ChanelsConfig chCfg
+ {
+ 	(uint8_t)rslt.getInt("chn_no"),   (uint8_t)rslt.getInt("type_id"),
+ 	(float)rslt.getDouble("loc_x"),   (float)rslt.getDouble("loc_y"),
+ 	(float)rslt.getDouble("loc_z"),   string(label),
+ 	(uint8_t)rslt.getInt("state_id"), (uint8_t)rslt.getInt("dev_id")
+ };
+```
+
+# 43. make编译可指定Makefile
+
+---
+
+```cpp
+//-f 选项：-f 选项用于指定 make 使用的 Makefile 文件名。默认情况下，make 会查找名为 Makefile 或 makefile 的文件。
+make -f Makefile_gdb
+```
+
