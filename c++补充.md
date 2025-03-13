@@ -25,7 +25,31 @@
 
   替代C风格的`static`，限制（变量、函数等）只能在当前文件中访问，不能被其他文件访问。
 
-  
+## （1）关于extern
+
+场景：
+
+```cpp
+//a.cpp
+#include "MS"
+namespace hzi
+{
+    MS ms;	//定义了ms实例，分配了内存
+}
+
+//b.cpp
+#include "MS"
+namespace hzi
+{
+    extern MS ms;//在b.cpp中要用这个ms，这里是对外部变量ms的声明。告知编译器变量定义在其他文件中，链接器会找到a.cpp中定义的ms链接到b.cpp
+}
+```
+
+* extern声明外部全局变量，用于不同文件之间访问，而不需要include定义了该变量的头文件。
+* 或该变量定义在.cpp文件中，无头文件可include。
+* 即使都在同一个命名空间中，另一个文件使用时也要extern声明。并且要加上【命名空间::】。
+
+
 
 # 1. std::expected
 
@@ -365,7 +389,10 @@ value：要查找的目标值。
 如果没有找到匹配的元素，则返回 last迭代器。
 ```
 
-* std::find_if 用于在容器中查找满足特定条件的第一个元素。它允许通过一个谓词函数（predicate）来定义查找条件，
+## （2）std::find_if
+
+ 用于在容器中查找满足特定条件的第一个元素。它允许通过一个谓词函数（predicate）来定义查找条件，
+
 ```cpp
 #include <algorithm>
 
@@ -378,7 +405,7 @@ pred：谓词函数，用于判断每个元素是否满足条件。它接受一�
 如果没有找到满足条件的元素，则返回 last迭代器。
 ```
 
-## （2）std::min_element和std::max_element
+## （3）std::min_element和std::max_element
 
 在区间内查找最值
 
@@ -389,7 +416,11 @@ int posIndex = pos-start;//index
 auto minVal = *pos;//值
 ```
 
+## （4）remove_if
 
+**重排元素**：`std::remove_if` 并不实际删除元素，而是将不满足条件的元素移到容器的末尾，并返回一个指向新逻辑序列（即满足条件的元素序列）末尾的迭代器。
+
+想要删除，需搭配容器自身的erase方法，删除指向【新序列末尾的迭代器和原序列末尾迭代器之间的数据】。
 
 # 16. 使用命名空间别名
 
@@ -1831,10 +1862,6 @@ void stop_timer(){
 ---
 
 ```cpp
-st.a=1;	//给成员赋值
-```
-
-```cpp
 //列表初始化
  ChanelsConfig chCfg
  {
@@ -1853,4 +1880,66 @@ st.a=1;	//给成员赋值
 //-f 选项：-f 选项用于指定 make 使用的 Makefile 文件名。默认情况下，make 会查找名为 Makefile 或 makefile 的文件。
 make -f Makefile_gdb
 ```
+
+# 44. std::execution
+
+---
+
+> `std::execution` 是 C++17 中引入的一个命名空间，它定义了一组用于指定并行和向量化算法执行策略的枚举类和对象。这些执行策略允许程序员指示标准算法（如 `std::sort`, `std::for_each` 等）应如何执行其操作，比如顺序执行、并行执行或向量化执行。
+
+* **`std::execution::seq`**：表示算法应以顺序方式执行，即不使用并行或向量化。这是默认的执行策略，如果不显式指定执行策略，算法将使用此策略。
+* **`std::execution::par`**：表示算法可以并行执行。这允许算法利用多核处理器的优势，将工作分割到多个线程上执行，从而可能显著提高性能，尤其是在处理大量数据时。然而，并行执行不保证算法的具体行为或执行顺序，因此结果可能依赖于实现和数据。
+* **`std::execution::par_unseq`**：表示算法可以并行且向量化执行。这提供了最大的性能潜力，因为它允许算法同时利用多线程和SIMD（单指令多数据）指令集的优势。然而，这也带来了最大的不确定性，因为算法的具体行为、执行顺序和内存访问模式都可能依赖于实现和数据。
+* **`std::execution::unseq`**（C++20引入）：表示算法可以向量化执行，但不保证并行执行。这个策略允许编译器和运行时系统使用SIMD指令来加速算法的执行，但不要求多线程并行。
+
+使用这些执行策略时，程序员需要将它们作为算法的第一个参数传递。
+
+```cpp
+#include <algorithm>
+#include <execution>
+#include <vector>
+
+int main() {
+    std::vector<int> data = {/* some data */};
+    std::sort(std::execution::par, data.begin(), data.end());
+    return 0;
+}
+```
+
+# 45. std::isna和std::isinf
+
+---
+
+* 这个条件使用 `std::isnan` 函数来检查 `A0` 是否是一个“非数”（NaN，Not a Number）。NaN 是一个特殊的浮点数值，用于表示某些未定义或不可表示的数学运算结果，比如 0.0 除以 0.0。如果 `A0` 是 NaN，`std::isnan(A0)` 返回真。
+* 这个条件使用 `std::isinf` 函数来检查 `A0` 是否是一个无穷大值（Infinity）。无穷大值可以是正无穷大或负无穷大，分别表示数学上趋近于正无穷或负无穷的值。如果 `A0` 是无穷大值，`std::isinf(A0)` 返回真。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
