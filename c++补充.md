@@ -491,10 +491,18 @@ std::cout<<a<<" "<<b;  // 输出提取的数据,100,200
 
 # 18. 抛出运行时异常
 ---
+> 运行时异常通常是为了处理那些在程序运行期间无法提前预测或静态检查的错误。（逻辑错误/语法错误是静态检查可以发现的）
+>
+> * 文件打开/读写失败
+> * 网络问题
+> * 数据库连接问题。读写问题可用sql_exception
+> * 依赖外部服务
+> * 用户输入问题
+
 * `.what()`
-std::exception类中的一个成员函数，返回一个指向描述异常原因的空终止字符串（C风格字符串）的指针。这个字符串通常用于调试和日志记录目的。
+  std::exception类中的一个成员函数，返回一个指向描述异常原因的空终止字符串（C风格字符串）的指针。这个字符串通常用于调试和日志记录目的。
 * `std::cerr`
-将异常消息输出到标准错误。
+  将异常消息输出到标准错误。
 
 
 ```cpp
@@ -502,12 +510,16 @@ std::exception类中的一个成员函数，返回一个指向描述异常原因
 #include <iostream>
 
 int main() {
-    try {
+    try 
+    {
         // 可能抛出异常的代码块
-        if (true) { // 示例错误条件
+        if (true)
+        { // 示例错误条件
             throw std::runtime_error("An error occurred during runtime");
         }
-    } catch (const std::runtime_error& e) {
+    } 
+    catch (const std::runtime_error& e)
+    {
         // 捕获并处理std::runtime_error异常
         std::cerr << "Caught a runtime_error: " << e.what() << std::endl;
     }
@@ -1207,6 +1219,14 @@ sql_exception 异常类，用于处理SQL执行过程中出现的错误。
   if(result.next())
   {
       int max = result.getInt("maxsq");//只获取maxsq的1条记录
+  }
+  ```
+  
+  ```cpp
+  //循环获取多条记录
+  while(result.next())
+  {
+      int max = result.getInt("maxsq");
   }
   ```
 
