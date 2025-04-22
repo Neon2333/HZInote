@@ -1,3 +1,11 @@
+
+
+# 更新
+
+---
+
+* 范各庄，新集二，更新偏移距可选基准通道。
+
 # 2025/3
 
 ## 23
@@ -131,10 +139,8 @@
   `doc_name` VARCHAR(100) DEFAULT NULL COMMENT "资料名",
   `upload_file_name` VARCHAR(100) DEFAULT NULL COMMENT "资料对应上传pdf文件名"
   )ENGINE = InnoDB AUTO_INCREMENT=1 CHARACTER SET = utf8;
-  
-  
   ```
-
+  
   
 
 * 开发接口：
@@ -439,3 +445,188 @@
 ## 4
 
 * bug：提取信号，通道2无数据
+
+## 7
+
+* 范各庄的提取图像通道2无波形
+* 和刘金锁沟通：相关原理
+
+## 8
+
+* **TODO：开会沟通范各庄矿的2通道无波形问题，以及其他问题**
+* 需求分析：距离迎头通道号不是1的时候，计算通道坐标问题修改
+* **TODO：搭建测试环境**
+
+## 9
+
+* fix_bug：修改基准通道，返回对应坐标。
+
+  > `迎头-偏移距`得到`基准通道坐标`。先前是1，某次挪动后改为3，那么新的基准就是3。
+  >
+  > `挪动后迎头-挪动后偏移距===>新基准通道3坐标`
+  >
+  > 挪动后的3的坐标-挪动前3的坐标（注意不是减挪动前1的坐标），即为delta各个通道坐标都要增加的值。
+
+  ```cpp
+  // //从之前写死取chn_no=1的检波器作为距离迎头最近检波器，改为1~16号选择某个检波器作为最近
+      // //但由于该代码发生在系统初始化阶段，是否会影响初始化后续使用hzi::firstChn_locx的过程，未知。
+      // auto rslt2 = conn.executeQuery("SELECT loc_x FROM `e_chns_config` WHERE type_id = 0 AND chn_no=?", 
+      //                                 hzi::firstChn_no);
+      // if (rslt2.next()) 
+      // {
+      //   // 获取第一个检波器坐标
+      //   hzi::firstChn_locx = rslt2.getDouble("loc_x");
+      // }
+  ```
+
+  修改：
+
+  > * 【第一个通道的坐标】获取发生在系统初始化阶段（Config.hpp-779）
+  >
+  > * 可能用到【第一个通道的坐标】的地方（client_handle_data.cpp-420）
+
+  可能影响：
+
+  > 未知e
+
+* 发现问题：为什么Config.hpp-1352的init中增加日志不打印。
+
+  要编译为debug才会打印，release不打印。
+
+## 10
+
+* 提交【修改基准通道】（是否会造成其他bug未知，待观察）
+
+* gyx：预警表e_warning_info有记录，但前端处理页面不显示。发现是`commands.cpp-1733的isNull`查询接口，只要有字段为null，查出结果就会返回`**204 No Content**：请求成功，但响应体为空`。
+
+  经查，发现表e_warning_info的suggestion字段在建表时，写的是`DEFAULT NULL`。
+
+  `update_db.sql`新增修改该字段为`NOT NULL DEFAULT "请在此处写处理意见"`
+
+## 14
+
+* fix：登陆页面若密码带有@则无法通过验证的情况
+
+  > * url中的@被编码为%40传送到服务器的，需要解码。调用`unescape`，并在`escapedChars`中增加了`{"%40", "@"}`的映射关系。
+  >
+  > * `verifyUser`函数中的`queryDb`函数通过占位符的方式，查不出字段带有@的记录，即使表里有对应记录。
+  >
+  >   ```cpp
+  >   bool verifyUser(string user, string pswd) {
+  >   auto conn = hzi::config.pConnPool->getConnection();
+  >   // bool ret = cmd::queryDb(conn,
+  >   //                         "SELECT * FROM e_users where user_name=? and "
+  >   //                         "password=PASSWORD(?)",
+  >   //                         user, pswd) ? true : false;
+  >               
+  >   /*
+  >     很奇怪：ret1=true,ret2=false,ret=true
+  >     queryDb()通过占位符的方式传入的参数中若包含@字符，查不出来。
+  >     所以导致带有@的密码无法通过验证。
+  >     而通过拼字符串的方式，直接调用executeQuery()则可以查到。
+  >   */
+  >   // bool ret1 = cmd::queryDb(conn,
+  >   //                         "SELECT * FROM e_users where user_name='jinchuanweizhen' and "
+  >   //                         "password=PASSWORD('JckyDiceke115113.@')") ? true : false;
+  >   // std::cout<<"ret1="<<ret1<<std::endl;
+  >           
+  >     ```cpp
+  >         
+  >   // bool ret2 = cmd::queryDb(conn,
+  >   //                         "SELECT * FROM e_users where user_name=? and "
+  >   //                         "password=PASSWORD(?)", user, pswd) ? true : false;
+  >     // std::cout<<"ret2="<<ret2<<std::endl;
+  >           
+  >     string sqlVerifyUser = "SELECT * FROM e_users where `user_name`='" + user + "' and `password`=PASSWORD('" + pswd + "')";
+  >   auto ret = conn.executeQuery(sqlVerifyUser.c_str());
+  >   if(ret.next())
+  >   {
+  >     return true;
+  >   }
+  >   return false;
+  >   // return ret;
+  >   }
+  
+* 接口`save_devices`回调函数修改：从只修改server_port改到修改devip/devport/server_port。
+
+  若请求修改的id在json中不存在，不做任何操作（不添加）；存在，则修改。
+
+  修改接口名为`update_devices`
+
+## 15
+
+* 拷贝了所需表到本地以及原始3/6数据到路径下，但系统手动历史计算时，并没有生成9类型文件也没有出提取图。
+
+  找问题所在。
+
+## 16
+
+* 偏移距问题的修改，升级到【新集二矿随掘系统】进行测试。fix小bug，通道号字段名在json中的前后端约定不一致，从`chnNO`改为`chn_no`。
+
+  ![image-20250416091925883](D:\notes\笔记Img\image-20250416091925883.png)
+
+## 17
+
+* 查找bug：
+
+  ![image-20250417100530544](D:\notes\笔记Img\image-20250417100530544.png)
+
+* bug：
+
+  ![image-20250417131756797](C:\Users\Admin\AppData\Roaming\Typora\typora-user-images\image-20250417131756798)
+
+## 18
+
+#### 接口`firstChnNO`修复bug：偏移距基准通道页面打开不显示以及发送chnNO发送null时崩掉的问题。
+
+现在打开页面时首先查询当前使用的基准通道号。
+
+* 排查园区实验系统，树形图不显示。
+
+* 排查范各庄，全时背景切换问题。
+
+## 21
+
+* bug
+
+  ![image-20250421090516183](C:\Users\Admin\AppData\Roaming\Typora\typora-user-images\image-20250421090516182)
+
+  ![image-20250421090445316](C:\Users\Admin\AppData\Roaming\Typora\typora-user-images\image-202504210904453161)
+
+  ![image-20250421090558922](C:\Users\Admin\AppData\Roaming\Typora\typora-user-images\image-20250421090558922666)
+
+#### bug fix：系统设置改为全时，但实时数据显示的提取图还是背景
+
+* 点击一次【同步】，触发接口`/config/e_mining_PCOSignalParm`，修改了表e_mining_PCOSignalParm_history和表e_mining_PCOSignalParm。
+
+  但前者接口json传了class_id，后者没传。
+
+  又因为表e_mining_PCOSignalParm的class_id字段默认值为3。未传值导致自动变更为3。
+
+  并且，`hzi::mining_classId`初始值为3，实时计算时函数`threadHanleData`中`mergeMs`拼帧前，没有从实时计算参数表`e_mining_PCOSignalParm`中查询class_id，而是直接用`hzi::mining_classId`。而历史计算的接口函数`handerSignalProcess`中，`mergeMs`拼帧前使用`hzi::mining_classId`查的却是实时表`e_mining_PCOSignalParm`。
+
+![image-20250421093139786](C:\Users\Admin\AppData\Roaming\Typora\typora-user-images\image-202504210931397861)
+
+![image-20250421093209715](C:\Users\Admin\AppData\Roaming\Typora\typora-user-images\image-20250421093209715.png)
+
+![image-20250421095117706](C:\Users\Admin\AppData\Roaming\Typora\typora-user-images\image-20250421095117706.png)
+
+![image-20250421095134819](C:\Users\Admin\AppData\Roaming\Typora\typora-user-images\image-20250421095134819.png)
+
+![image-20250421100705134](C:\Users\Admin\AppData\Roaming\Typora\typora-user-images\image-202504211007051341)
+
+![image-20250421102226600](C:\Users\Admin\AppData\Roaming\Typora\typora-user-images\image-202504211022266001)
+
+* 会议：现有问题，以及搭建测试环境
+
+## 22
+
+#### fix bug：实时计算类型写死为背景
+
+* 原本实时计算的类型不根据实时表`e_mining_PCOSignalParm1`中的`class_id`来，而是直接用的` hzi::mining_classId`的初始值3。见`ms_mining.cpp-5538`。改为：先从表里查`class_id`。
+
+* 历史计算中接口`/handerSignal/:from_time/:to_time/:time_len/:devId`和`/handerSignalMining/:from_time/:to_time/:time_len/:devId`使用的回调函数`handerSignalProcess`和`handerSignalProcess_mining`，中在使用`hzi::mining_classId`前都是查的实时表`e_mining_PCOSignalParm`。应改为查历史表`e_mining_PCOSignalParm_history`。
+
+* 并让前端在页面【随掘地震】中设定的参数入库到历史表`e_mining_PCOSignalParm_history`，而【系统-随掘监测-实施参数】中设定的参数入库到实时表`e_mining_PCOSignalParm`。
+
+  
