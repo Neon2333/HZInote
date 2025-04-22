@@ -1,10 +1,10 @@
 
 
-# 更新
+# TODO
 
 ---
 
-* 范各庄，新集二，更新偏移距可选基准通道。
+* 
 
 # 2025/3
 
@@ -577,7 +577,7 @@
 
 ## 18
 
-#### 接口`firstChnNO`修复bug：偏移距基准通道页面打开不显示以及发送chnNO发送null时崩掉的问题。
+#### fix bug：接口`firstChnNO`，偏移距基准通道页面打开不显示以及发送chnNO发送null时崩掉的问题。
 
 现在打开页面时首先查询当前使用的基准通道号。
 
@@ -595,7 +595,7 @@
 
   ![image-20250421090558922](C:\Users\Admin\AppData\Roaming\Typora\typora-user-images\image-20250421090558922666)
 
-#### bug fix：系统设置改为全时，但实时数据显示的提取图还是背景
+#### fix bug：系统设置改为全时，但实时数据显示的提取图还是背景
 
 * 点击一次【同步】，触发接口`/config/e_mining_PCOSignalParm`，修改了表e_mining_PCOSignalParm_history和表e_mining_PCOSignalParm。
 
@@ -624,9 +624,15 @@
 #### fix bug：实时计算类型写死为背景
 
 * 原本实时计算的类型不根据实时表`e_mining_PCOSignalParm1`中的`class_id`来，而是直接用的` hzi::mining_classId`的初始值3。见`ms_mining.cpp-5538`。改为：先从表里查`class_id`。
-
 * 历史计算中接口`/handerSignal/:from_time/:to_time/:time_len/:devId`和`/handerSignalMining/:from_time/:to_time/:time_len/:devId`使用的回调函数`handerSignalProcess`和`handerSignalProcess_mining`，中在使用`hzi::mining_classId`前都是查的实时表`e_mining_PCOSignalParm`。应改为查历史表`e_mining_PCOSignalParm_history`。
-
 * 并让前端在页面【随掘地震】中设定的参数入库到历史表`e_mining_PCOSignalParm_history`，而【系统-随掘监测-实施参数】中设定的参数入库到实时表`e_mining_PCOSignalParm`。
 
-  
+#### bug：潘集三矿提取图不对。
+
+历史重算得到的图正确，但实时的不对。考虑是实时写死是拿背景数据计算的bug，历史重算的图拿全时算的。
+
+![image-20250422154644551](C:\Users\Admin\AppData\Roaming\Typora\typora-user-images\image-202504221546445512)
+
+#### TODO：写预警重算/下载接口
+
+![image-20250422155135640](C:\Users\Admin\AppData\Roaming\Typora\typora-user-images\image-202504221551356401)
