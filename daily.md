@@ -4,8 +4,7 @@
 
 ---
 
-* 禅道一个bug
-* 写预警重算
+* 禅道bug
 * 环境数据：9/10
 
 # 2025/3
@@ -519,7 +518,7 @@ void updateServerPort(const Rest::Request &request, Http::ResponseWriter respons
 >   //                         "SELECT * FROM e_users where user_name=? and "
 >   //                         "password=PASSWORD(?)",
 >   //                         user, pswd) ? true : false;
->                   
+>                     
 >   /*
 >     很奇怪：ret1=true,ret2=false,ret=true
 >     queryDb()通过占位符的方式传入的参数中若包含@字符，查不出来。
@@ -530,14 +529,14 @@ void updateServerPort(const Rest::Request &request, Http::ResponseWriter respons
 >   //                         "SELECT * FROM e_users where user_name='jinchuanweizhen' and "
 >   //                         "password=PASSWORD('JckyDiceke115113.@')") ? true : false;
 >   // std::cout<<"ret1="<<ret1<<std::endl;
->               
+>                 
 >     ```cpp
->             
+>               
 >   // bool ret2 = cmd::queryDb(conn,
 >   //                         "SELECT * FROM e_users where user_name=? and "
 >   //                         "password=PASSWORD(?)", user, pswd) ? true : false;
 >     // std::cout<<"ret2="<<ret2<<std::endl;
->               
+>                 
 >     string sqlVerifyUser = "SELECT * FROM e_users where `user_name`='" + user + "' and `password`=PASSWORD('" + pswd + "')";
 >   auto ret = conn.executeQuery(sqlVerifyUser.c_str());
 >   if(ret.next())
@@ -655,3 +654,10 @@ void updateServerPort(const Rest::Request &request, Http::ResponseWriter respons
 
 拆分getWarningMsg()函数为2个函数，一个获取时间段，一个对时间段内的e_msevt_rslts的记录进行查询。
 
+#### 整理文档
+
+## 25
+
+#### 写功能：增加回采位置历史记录
+
+#### 预警重算接口增加异常处理
