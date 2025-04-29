@@ -1,11 +1,20 @@
 
 
-# TODO
+# 任务汇总
 
 ---
 
-* 禅道bug
-* 环境数据：9/10
+- [ ] 禅道bug
+
+- [ ] 环境数据：9/10
+
+
+
+
+
+
+
+---
 
 # 2025/3
 
@@ -518,7 +527,7 @@ void updateServerPort(const Rest::Request &request, Http::ResponseWriter respons
 >   //                         "SELECT * FROM e_users where user_name=? and "
 >   //                         "password=PASSWORD(?)",
 >   //                         user, pswd) ? true : false;
->                       
+>                             
 >   /*
 >     很奇怪：ret1=true,ret2=false,ret=true
 >     queryDb()通过占位符的方式传入的参数中若包含@字符，查不出来。
@@ -529,14 +538,14 @@ void updateServerPort(const Rest::Request &request, Http::ResponseWriter respons
 >   //                         "SELECT * FROM e_users where user_name='jinchuanweizhen' and "
 >   //                         "password=PASSWORD('JckyDiceke115113.@')") ? true : false;
 >   // std::cout<<"ret1="<<ret1<<std::endl;
->                   
+>                         
 >     ```cpp
->                 
+>                       
 >   // bool ret2 = cmd::queryDb(conn,
 >   //                         "SELECT * FROM e_users where user_name=? and "
 >   //                         "password=PASSWORD(?)", user, pswd) ? true : false;
 >     // std::cout<<"ret2="<<ret2<<std::endl;
->                   
+>                         
 >     string sqlVerifyUser = "SELECT * FROM e_users where `user_name`='" + user + "' and `password`=PASSWORD('" + pswd + "')";
 >   auto ret = conn.executeQuery(sqlVerifyUser.c_str());
 >   if(ret.next())
@@ -666,17 +675,11 @@ void updateServerPort(const Rest::Request &request, Http::ResponseWriter respons
 
 #### 排查代码：是否是，不论勾不勾选道间均衡，再提取过程都做了道间均衡？
 
-#### 明天开会：工作量事情太多？节点到底能不能做？高鑫宇事情很多（大屏）不能作为统筹的人？
+## 28
 
-```markdown
-举个例子，22号那天，范各庄的2通道没数据，我在看搭建环境，刘金锁又来问题是实时只显示背景数据不能全时。我去找孙伟豪要远程码，又给我来个潘三数据显示不对的问题，今天下午还在问我这个数据显示为什么不对。而且他们对这些bug都催的很急。
-下午的时候，测试又问我环境怎么搭的，我给了我自己整理的文档，她没搭建好，又来问我，我当时在忙着排查bug，说后面再帮着看看。然后就问我各种这个是什么功能，那个什么功能，我也不知道前人怎么商谈沟通的。后面给我提了4个bug。我还没来得及改，到现在。后面在周五前，算是排查出为什么数据显示不对，一个是后端有2处查的表都不对。还有就是：前端用这个接口时，少传了个参数。这个问题我前几天在禅道以前关于随掘提出的bug里，看到测试以前提出来过，郑艳解决的。估计就是直接那个参数class_id不传了。现在爆的雷。以前的沟通协商，做的解决方法，是否会对其他的功能产生影响，导致在后面爆雷，测试没测出来，改bug的人也不知道。
-前端让我写接口的事情，我需要配合。但有时候不是我接口的问题，是前端用错的问题，我也要花时间去看。
-只要是出了问题，不论是真的有问题还是一时的假象，不论是前端还是后台。工程部都来找我后台开发，这合理吗？不论是新功能的需求，还是改bug的需求，首先需要有人统筹。要改bug，前端要排查前端的问题，后端要排查后端的。要写新功能，首先需求分析，再给前后端分别指派任务。难道现在这个统筹的人是我一个对过去功能协商都不了解的新人吗？我一个人要直接应对孙伟豪/刘金锁/前端/测试，这合理吗？
-```
+会议：手头还剩的事情。节点的进度，硬件完成了吗。
 
-谁做统筹的人。老员工和领导不做，让我做？
+#### 预警电法和地震分开，并测试
 
-制度和流程要完善，明确任务，统筹规划，按部就班，各司其职，及时了解工作进度。（开发日志，git提交日志）
+## 29
 
-开发文档要完善，以备查阅。写代码要按照规范，变量名tmp_out1，tmp_out2这种是什么写法。
