@@ -25,6 +25,7 @@
 
   替代C风格的`static`，限制（变量、函数等）只能在当前文件中访问，不能被其他文件访问。
 
+<<<<<<< Updated upstream
 ## （1）关于extern
 
 场景：
@@ -50,6 +51,47 @@ namespace hzi
 * 即使都在同一个命名空间中，另一个文件使用时也要extern声明。并且要加上【命名空间::】。
 
 
+=======
+## 写法
+
+封装全局变量。
+
+如果一个变量在头文件中被定义为非内联的静态变量，那么每个包含该头文件的源文件都会生成该变量的一个副本，从而导致链接错误。因此：
+
+若想在头文件中声明的时候直接定义（初始化）：
+
+* const直接定义
+* 只写声明，其他文件使用时通过`extern`声明为外部变量，再使用
+
+```cpp
+//a.hpp
+//定义
+namespace aaa
+{
+    const int n = 10;	//const变量可以直接初始化
+    inline static int q = 2;	//写成inline static再初始化不会有重定义
+    
+    void func();	//函数声明（定义需要在a.cpp中写）
+    int m;	//不写成inline static定义，其他文件要使用需先声明，且声明应带extern表明是定义在外部的全局变量
+}
+```
+
+```cpp
+//b.cpp
+#include "a.hpp"
+
+//声明
+namespace aaa
+{
+    extern int m;//声明m在外部
+}
+
+//使用
+cout<<aaa::n<<endl;
+aaa::m=1;	
+cout<<aaa::q<<endl;
+```
+>>>>>>> Stashed changes
 
 # 1. std::expected
 
@@ -199,6 +241,7 @@ insert_or_assign()是C++17中引入的一个成员函数模板，用于在std::m
 # 3. [[nodiscard]]
 一个C++17引入的属性，用于指示函数的返回值不应被忽略。如果调用了一个带有 [[nodiscard]] 属性的函数，
 但没有使用其返回值，编译器将发出警告。这对于那些其返回值包含重要信息或操作结果的函数特别有用，可以帮助开发者避免由于忘记处理函数返回值而导致的潜在错误。
+
 ```cpp
  [[nodiscard]] T start(const size_t i) const
     {
@@ -207,9 +250,11 @@ insert_or_assign()是C++17中引入的一个成员函数模板，用于在std::m
 ```
 # 4. inline变量
 ---
-https://blog.csdn.net/janeqi1987/article/details/100108589
-https://cloud.tencent.com/developer/article/1979728
-使用Inline变量的动机
+> https://blog.csdn.net/janeqi1987/article/details/100108589
+> https://cloud.tencent.com/developer/article/1979728
+> 使用Inline变量的原因：
+
+* static inline的顺序等价。
 
 * 在C++中，类结构中不允许初始化非const静态成员
 
